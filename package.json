@@ -1,0 +1,14 @@
+{
+  "name": "lisuify",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "npm --workspace=lisuify-web run dev"
+  },
+  "license": "BSD-2-Clause"
+}
