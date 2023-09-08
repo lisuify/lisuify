@@ -1,23 +1,18 @@
 ---
 import MainLayout from "../layouts/main.astro";
-import Button from "../components/Button.svelte";
-import * as README from "../../README.md";
-
-// https://docs.astro.build/core-concepts/astro-components/
+import { pageTitle, pageDescription } from "../consts";
+import Card from "../components/Card.svelte";
+import Stats from "../components/Stats.svelte";
+import Toast from "../components/Toast.svelte";
 ---
 
 <MainLayout
   content={{
-    title: "Astro + Svelte + Tailwind",
-    description:
-      "Astro Starter Template with Svelte, Tailwind, DaisyUI, and Service Worker",
+    title: pageTitle,
+    description: pageDescription,
   }}
 >
-  <div>
-    <!-- https://docs.astro.build/en/reference/directives-reference -->
-    <Button text="Count" client:idle>Svelte Button in Astro!</Button>
-  </div>
-  <article class="prose max-w-none">
-    <README.Content />
-  </article>
+  <Stats client:only />
+  <Card client:only />
+  <Toast client:only />
 </MainLayout>
