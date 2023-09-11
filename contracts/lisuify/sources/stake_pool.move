@@ -26,6 +26,9 @@ module lisuify::stake_pool {
     const ESlashed: u64 = 12;
     const ENotAllUpdated: u64 = 13;
 
+    /// StakedSui objects cannot be split to below this amount.
+    const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
+
     struct StakePoolUpdate has store, drop {
         pending_sui_balance: u64,
         updating_epoch: u64,
@@ -315,7 +318,9 @@ module lisuify::stake_pool {
         sui: Coin<SUI>,
         ctx: &mut TxContext,
     ): Balance<C> {
-        if (option::is_some(&self.staking_validator)) {
+        if (coin::value(&sui) >= MIN_STAKING_THRESHOLD
+            && option::is_some(&self.staking_validator)
+        ) {
             let stake = sui_system::request_add_stake_non_entry(
                 sui_system,
                 sui,
