@@ -1,5 +1,5 @@
 /* eslint-disable node/no-unsupported-features/es-builtins */
-import {MoveValue, SuiClient} from '@mysten/sui.js/client';
+import {CoinStruct, MoveValue, SuiClient} from '@mysten/sui.js/client';
 import {TransactionBlock} from '@mysten/sui.js/transactions';
 import {
   addValidator,
@@ -11,6 +11,7 @@ import {StakePoolUpdate} from './StakePoolUpdate';
 import {updateValidator} from '../transactionBuilder/updateValidator';
 import {finalizeUpdate} from '../transactionBuilder/finalizeUpdate';
 import {depositSui} from '../transactionBuilder/depositSui';
+import {withdraw} from '../transactionBuilder/withdraw';
 
 export class StakePool {
   private constructor(
@@ -172,6 +173,36 @@ export class StakePool {
       lisuifyId: this.lisuifyId,
       poolId: this.id,
       sui: coin,
+      txb,
+    });
+  }
+
+  withdraw({
+    coins, // must be liSUI
+    amount,
+    txb,
+  }: {
+    coins: CoinStruct[];
+    amount: bigint;
+    txb: TransactionBlock;
+  }) {
+    if (coins.length === 0) {
+      throw new Error('No coins');
+    }
+    const [primaryCoin, ...mergeCoins] = coins;
+    const primaryCoinInput = txb.object(primaryCoin.coinObjectId);
+    if (mergeCoins.length > 0) {
+      // TODO: This could just merge a subset of coins that meet the balance requirements instead of all of them.
+      txb.mergeCoins(
+        primaryCoinInput,
+        mergeCoins.map(coin => txb.object(coin.coinObjectId))
+      );
+    }
+    const coin = txb.splitCoins(primaryCoinInput, [txb.pure(amount)]);
+    withdraw({
+      lisuifyId: this.lisuifyId,
+      poolId: this.id,
+      token: coin,
       txb,
     });
   }

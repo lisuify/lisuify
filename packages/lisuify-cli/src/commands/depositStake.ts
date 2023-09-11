@@ -35,5 +35,5 @@ const depositStake = async ({
     txb,
   });
 
-  execute(txb);
+  await execute(txb);
 };

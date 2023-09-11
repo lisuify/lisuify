@@ -35,5 +35,5 @@ const setStakingValidator = async ({
     txb,
   });
 
-  execute(txb);
+  await execute(txb);
 };
