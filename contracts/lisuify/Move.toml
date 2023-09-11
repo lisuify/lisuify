@@ -1,7 +1,7 @@
 [package]
 name = "lisuify"
 version = "0.0.1"
-published-at = "0x72054d8710f3906afbcb9ec3fcd2738110ab1ed415742636fb9b0e2b5ffaf5dd"
+published-at = "0x1a8da1e33d8b6a7c55f0aebbcbbb950817d2bc283b722f04412dff8c14107a18"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }

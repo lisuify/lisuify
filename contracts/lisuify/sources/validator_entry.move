@@ -214,9 +214,6 @@ module lisuify::validator_entry {
                 self.validator_pool_id,
                 &exchange_rate
             );
-            if (epoch == self.last_update_epoch) {
-                self.last_update_sui_balance = self.last_update_sui_balance - target_balance + joined_balance;
-            };
             joined_balance - target_balance
         } else {
             let stake_balance = stake_balance_internal(
