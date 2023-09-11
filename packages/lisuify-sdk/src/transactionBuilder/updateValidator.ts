@@ -1,30 +1,27 @@
-import {
-  TransactionArgument,
-  TransactionBlock,
-} from '@mysten/sui.js/transactions';
+import {TransactionBlock} from '@mysten/sui.js/transactions';
 import {SUI_SYSTEM_STATE_OBJECT_ID} from '@mysten/sui.js/utils';
 
-export const depositSui = ({
+export const updateValidator = ({
   lisuifyId,
   poolId,
-  sui,
+  validatorPoolId,
   txb,
 }: {
   lisuifyId: string;
   poolId: string;
-  sui: TransactionArgument;
+  validatorPoolId: string;
   txb: TransactionBlock;
 }) => {
   txb.moveCall({
-    target: `${lisuifyId}::stake_pool::deposit_sui`,
+    target: `${lisuifyId}::stake_pool::update_validator`,
     typeArguments: [`${lisuifyId}::coin::COIN`],
     arguments: [
       // self
       txb.object(poolId),
       // sui_system
       txb.object(SUI_SYSTEM_STATE_OBJECT_ID),
-      // sui
-      sui,
+      // validator_pool_id
+      txb.object(validatorPoolId),
     ],
   });
 };

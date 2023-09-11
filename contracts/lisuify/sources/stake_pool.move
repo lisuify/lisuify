@@ -24,6 +24,7 @@ module lisuify::stake_pool {
     const EUpdateIsAlreadyRunning: u64 = 10;
     const ENotUpdating: u64 = 11;
     const ESlashed: u64 = 12;
+    const ENotAllUpdated: u64 = 13;
 
     struct StakePoolUpdate has store, drop {
         pending_sui_balance: u64,
@@ -175,7 +176,7 @@ module lisuify::stake_pool {
             let update = option::borrow(&mut self.update);
             assert!(epoch > update.updating_epoch, EUpdateIsAlreadyRunning);
         };
-        option::swap(&mut self.update, StakePoolUpdate {
+        option::swap_or_fill(&mut self.update, StakePoolUpdate {
             pending_sui_balance: 0,
             updating_epoch: epoch,
             updated_validators: 0,
@@ -189,7 +190,7 @@ module lisuify::stake_pool {
         ctx: &TxContext,
     ) {
         let epoch = tx_context::epoch(ctx);
-        if(option::is_none(&self.update)
+        if (option::is_none(&self.update)
             || epoch != option::borrow(&self.update).updating_epoch
         ) {
             start_update(self, ctx);
@@ -220,6 +221,10 @@ module lisuify::stake_pool {
     ) {
         assert!(option::is_some(&self.update), ENotUpdating);
         let update = option::extract(&mut self.update);
+        assert!(
+            update.updated_validators == vector::length(&self.validators),
+            ENotAllUpdated
+        );
         assert!(
             update.pending_sui_balance >= self.curret_sui_balance,
             ESlashed
