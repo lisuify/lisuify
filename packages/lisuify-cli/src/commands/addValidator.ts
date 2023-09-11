@@ -35,5 +35,5 @@ const addValidator = async ({
     txb,
   });
 
-  execute(txb);
+  await execute(txb);
 };

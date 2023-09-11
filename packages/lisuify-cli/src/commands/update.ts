@@ -26,5 +26,5 @@ const update = async ({lisuify, poolId}: {lisuify: string; poolId: string}) => {
     txb,
   });
 
-  execute(txb);
+  await execute(txb);
 };

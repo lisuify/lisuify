@@ -12,10 +12,11 @@ module lisuify::coin {
             witness,
             9,
             b"liSUI",
-            b"Liquid staked SUI",
-            b"Coin representation of the staked SUI",
+            b"Liquid stake",
+            b"Token representation of the staked SUI",
             option::none(),
-            ctx);
+            ctx
+        );
         transfer::public_freeze_object(metadata);
         let (admin_cap, validator_manager_cap) = stake_pool::new<COIN>(treasury, ctx);
         transfer::public_transfer(admin_cap, tx_context::sender(ctx));
