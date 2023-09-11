@@ -1,4 +1,7 @@
-import {TransactionBlock} from '@mysten/sui.js/transactions';
+import {
+  TransactionArgument,
+  TransactionBlock,
+} from '@mysten/sui.js/transactions';
 import {SUI_SYSTEM_STATE_OBJECT_ID} from '@mysten/sui.js/utils';
 
 export const depositSui = ({
@@ -9,7 +12,7 @@ export const depositSui = ({
 }: {
   lisuifyId: string;
   poolId: string;
-  sui: string;
+  sui: TransactionArgument;
   txb: TransactionBlock;
 }) => {
   txb.moveCall({
@@ -21,7 +24,7 @@ export const depositSui = ({
       // sui_system
       txb.object(SUI_SYSTEM_STATE_OBJECT_ID),
       // sui
-      // txb.mergeCoins(),
+      sui,
     ],
   });
 };

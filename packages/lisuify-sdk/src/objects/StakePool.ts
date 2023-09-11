@@ -10,6 +10,7 @@ import {ValidatorEntry} from './ValidatorEntry';
 import {StakePoolUpdate} from './StakePoolUpdate';
 import {updateValidator} from '../transactionBuilder/updateValidator';
 import {finalizeUpdate} from '../transactionBuilder/finalizeUpdate';
+import {depositSui} from '../transactionBuilder/depositSui';
 
 export class StakePool {
   private constructor(
@@ -161,6 +162,16 @@ export class StakePool {
       lisuifyId: this.lisuifyId,
       poolId: this.id,
       stake,
+      txb,
+    });
+  }
+
+  depositSui({amount, txb}: {amount: bigint; txb: TransactionBlock}) {
+    const coin = txb.splitCoins(txb.gas, [txb.pure(amount)]);
+    depositSui({
+      lisuifyId: this.lisuifyId,
+      poolId: this.id,
+      sui: coin,
       txb,
     });
   }
