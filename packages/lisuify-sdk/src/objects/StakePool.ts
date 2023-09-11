@@ -6,6 +6,10 @@ import {
   depositStake,
   setStakingValidator,
 } from '../transactionBuilder';
+import {ValidatorEntry} from './ValidatorEntry';
+import {StakePoolUpdate} from './StakePoolUpdate';
+import {updateValidator} from '../transactionBuilder/updateValidator';
+import {finalizeUpdate} from '../transactionBuilder/finalizeUpdate';
 
 export class StakePool {
   private constructor(
@@ -22,7 +26,9 @@ export class StakePool {
     private _lastUpdateSuiBalance: bigint,
     private _lastUpdateTokenSupply: bigint,
     private _currentSuiBalance: bigint,
+    private _update: StakePoolUpdate | null,
     private _stakingValidator: string | null,
+    private _validators: ValidatorEntry[],
     private _reserve: bigint
   ) {}
 
@@ -62,8 +68,14 @@ export class StakePool {
   get stakingValidator() {
     return this._stakingValidator;
   }
+  get validators() {
+    return this._validators;
+  }
   get reserve() {
     return this._reserve;
+  }
+  get currentUpdate() {
+    return this._update;
   }
 
   static async load({
@@ -117,7 +129,13 @@ export class StakePool {
       BigInt(data.last_update_sui_balance as string),
       BigInt(data.last_update_token_supply as string),
       BigInt(data.curret_sui_balance as string),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data.update as any) && StakePoolUpdate.read((data.update as any).fields),
       data.staking_validator as string | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data.validators as {fields: any}[]).map(({fields}) =>
+        ValidatorEntry.read(fields)
+      ),
       BigInt(data.reserve as string)
     );
   }
@@ -159,6 +177,34 @@ export class StakePool {
       poolId: this.id,
       address,
       cap: this.validatorManagerCapId,
+      txb,
+    });
+  }
+
+  async update({provider, txb}: {provider: SuiClient; txb: TransactionBlock}) {
+    const {epoch} = await provider.getLatestSuiSystemState();
+    const epochNumber = BigInt(epoch);
+    if (epochNumber <= this.lastUpdateEpoch) {
+      throw new Error('Too early to update');
+    }
+    let i = 0;
+    if (
+      this.currentUpdate &&
+      this.currentUpdate.updatingEpoch === epochNumber
+    ) {
+      i = Number(this.currentUpdate.updatedValidators);
+    }
+    for (; i < this.validators.length; i++) {
+      updateValidator({
+        lisuifyId: this.lisuifyId,
+        poolId: this.id,
+        validatorPoolId: this.validators[i].validatorPoolId,
+        txb,
+      });
+    }
+    finalizeUpdate({
+      lisuifyId: this.lisuifyId,
+      poolId: this.id,
       txb,
     });
   }
