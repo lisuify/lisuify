@@ -2,9 +2,14 @@ export const pageTitle = "LiSuify";
 
 export const pageDescription = "Stake SUI for the best profit";
 
+export const githubLink = "https://github.com/lisuify/lisuify";
+
 export const network: "mainnet" | "testnet" | "devnet" | "localnet" = "devnet";
 
 export const suiDecimal = 9;
+
+export const originalLisuifyId =
+  "0x0afdb9aee992f4f8c300c64fa58eb1169ebae26acd8b513b0614d2d35d367b7d";
 
 export const lisuifyId =
   "0xd3558c200309fbecdd751adc36dc31d35628ce71cfdaf1d3e7d427eea5d4fcaf";

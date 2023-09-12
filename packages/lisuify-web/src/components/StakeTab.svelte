@@ -15,7 +15,7 @@
     suiAmountError = "";
     suiAmount = target;
     if (Number(suiAmount) < 0.1) {
-      suiAmountError = "SUI amount should more than 1";
+      suiAmountError = "SUI amount must more than 0.1";
       return;
     }
     if (

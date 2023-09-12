@@ -7,8 +7,12 @@
   "workspaces": [
     "packages/*"
   ],
+  "devDependencies": {
+    "pnpm": "^6.18.0"
+  },
   "scripts": {
-    "web": "npm --workspace=lisuify-web run dev"
+    "web": "npm --workspace=lisuify-web run dev",
+    "web:build": "npm --workspace=lisuify-web run build"
   },
   "license": "BSD-2-Clause"
 }
