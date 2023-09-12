@@ -12,10 +12,15 @@ module lisuify::stake_pool {
     use sui_system::sui_system::{Self, SuiSystemState};
     use sui::pay;
     use sui::math;
+    use sui::clock::{Self, Clock};
+    use sui::event;
 
     friend lisuify::coin;
 
     const MAX_BPC: u32 = 1000000;
+    const ONE_MINUTE_MS: u64 = 60000;
+    const ONE_DAY_MS: u64 = 86400000;
+
     const EOutdated: u64 = 3;
     const EValidatorAlreadyExists: u64 = 5;
     const EValidatorDoesNotExist: u64 = 6;
@@ -26,6 +31,9 @@ module lisuify::stake_pool {
     const ENotUpdating: u64 = 11;
     const ESlashed: u64 = 12;
     const ENotAllUpdated: u64 = 13;
+    const EWrongValidatorAddress: u64 = 14;
+    const ETooEarlyToStakeReserve: u64 = 15;
+    const EWrongAdminCap: u64 = 16;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -45,6 +53,7 @@ module lisuify::stake_pool {
         fresh_deposit_fee_bpc: u32, // replaces the next epoch rate prediction
         withdraw_fee_bpc: u32,
         rewards_fee_bpc: u32,
+        keeping_reserve_ms: u64,
         last_update_epoch: u64,
         last_update_sui_balance: u64,
         last_update_token_supply: u64,
@@ -85,6 +94,7 @@ module lisuify::stake_pool {
             fresh_deposit_fee_bpc: 100,
             withdraw_fee_bpc: 100,
             rewards_fee_bpc: 50000,
+            keeping_reserve_ms: ONE_DAY_MS - 10 * ONE_MINUTE_MS,
             last_update_epoch: tx_context::epoch(ctx),
             last_update_sui_balance: 0,
             last_update_token_supply: 0,
@@ -125,6 +135,12 @@ module lisuify::stake_pool {
         option::none()
     }
 
+    struct ValidatorAdded has copy, drop {
+        stake_pool_id: ID,
+        validator_pool_id: ID,
+        new_count: u64
+    }
+
     public entry fun add_validator<C>(
         self: &mut StakePool<C>,
         validator_pool_id: ID,
@@ -145,6 +161,48 @@ module lisuify::stake_pool {
             ctx
         );
         vector::push_back(&mut self.validators, validator_entry);
+        event::emit(ValidatorAdded {
+            stake_pool_id: object::id(self),
+            validator_pool_id,
+            new_count: vector::length(&self.validators)
+        })
+    }
+
+    struct ValidatorActiveChanged has copy, drop {
+        stake_pool_id: ID,
+        validator_pool_id: ID,
+        is_active: bool,
+    }
+
+    public entry fun set_validator_active<C>(
+        self: &mut StakePool<C>,
+        validator_pool_id: ID,
+        is_active: bool,
+        cap: &ValidatorManagerCap<C>
+    ) {
+        assert!(
+            object::id(cap) == self.validator_manager_cap_id,
+            EWrongValidatorManagerCap
+        );
+        let i = validator_index(self, validator_pool_id);
+        assert!(option::is_some(&i), EValidatorDoesNotExist);
+        let i = option::destroy_some(i);
+        let validator = vector::borrow_mut(&mut self.validators, i);
+        if (validator_entry::is_active(validator) == is_active) {
+            return
+        };
+        validator_entry::set_is_active(validator, is_active);
+        event::emit(ValidatorActiveChanged {
+            stake_pool_id: object::id(self),
+            validator_pool_id,
+            is_active
+        })
+    }
+
+    struct ValidatorRemoved has copy, drop {
+        stake_pool_id: ID,
+        validator_pool_id: ID,
+        new_count: u64
     }
 
     public entry fun remove_validator<C>(
@@ -168,6 +226,16 @@ module lisuify::stake_pool {
                 update.updated_validators = update.updated_validators - 1;
             }
         };
+        event::emit(ValidatorRemoved {
+            stake_pool_id: object::id(self),
+            validator_pool_id,
+            new_count: vector::length(&self.validators),
+        })
+    }
+
+    struct UpdateStarted has copy, drop {
+        stake_pool_id: ID,
+        epoch: u64
     }
 
     public entry fun start_update<C>(
@@ -185,6 +253,18 @@ module lisuify::stake_pool {
             updating_epoch: epoch,
             updated_validators: 0,
         });
+        event::emit(UpdateStarted {
+            stake_pool_id: object::id(self),
+            epoch,
+        })
+    }
+
+    struct ValidatorUpdated has copy, drop {
+        stake_pool_id: ID,
+        epoch: u64,
+        validator_pool_id: ID,
+        validator_index: u64,
+        validator_sui_balance: u64,
     }
 
     public entry fun update_validator<C>(
@@ -199,6 +279,7 @@ module lisuify::stake_pool {
         ) {
             start_update(self, ctx);
         };
+        let stake_pool_id = object::id(self);
         let update = option::borrow_mut(&mut self.update);
         let validator_count = vector::length(&self.validators);
         assert!(
@@ -217,6 +298,24 @@ module lisuify::stake_pool {
         );
         update.pending_sui_balance = update.pending_sui_balance + validator_sui_balance;
         update.updated_validators = update.updated_validators + 1;
+        event::emit(ValidatorUpdated {
+            stake_pool_id,
+            epoch: update.updating_epoch,
+            validator_pool_id: validator_entry::validator_pool_id(validator),
+            validator_index: update.updated_validators - 1,
+            validator_sui_balance
+        })
+    }
+
+    struct UpdateFinalized has copy, drop {
+        stake_pool_id: ID,
+        epoch: u64,
+        rewards: u64,
+        fees_collected: u64,
+        old_sui_balance: u64,
+        old_token_supply: u64,
+        new_sui_balance: u64,
+        new_token_supply: u64,
     }
 
     public entry fun finalize_update<C>(
@@ -232,6 +331,9 @@ module lisuify::stake_pool {
             update.pending_sui_balance >= self.curret_sui_balance,
             ESlashed
         );
+        let old_sui_balance = self.last_update_sui_balance;
+        let old_token_supply = self.last_update_token_supply;
+
         let rewards = update.pending_sui_balance - self.curret_sui_balance;
         let fee = (((rewards as u128)
             * (self.rewards_fee_bpc as u128)
@@ -244,6 +346,17 @@ module lisuify::stake_pool {
         self.last_update_sui_balance = update.pending_sui_balance;
         self.last_update_token_supply = coin::total_supply(&self.treasury);
         self.curret_sui_balance = update.pending_sui_balance;
+
+        event::emit(UpdateFinalized {
+            stake_pool_id: object::id(self),
+            epoch: update.updating_epoch,
+            rewards,
+            fees_collected: token_fee,
+            old_sui_balance,
+            old_token_supply,
+            new_sui_balance: self.last_update_sui_balance,
+            new_token_supply: self.last_update_token_supply
+        })
     }
 
     fun deposit_stake_internal<C>(
@@ -276,12 +389,28 @@ module lisuify::stake_pool {
         (stake_balance, fresh_part)
     }
 
+    struct StakeDeposited has copy, drop {
+        stake_pool_id: ID,
+        validator_pool_id: ID,
+        stake_activation_epoch: u64,
+        principal: u64,
+        stake_balance: u64,
+        token_mint: u64,
+        new_curret_sui_balance: u64,
+        fresh_deposit_fee_bpc: u32,
+        last_update_sui_balance: u64,
+        last_update_token_supply: u64,
+    }
+
     public fun deposit_stake_non_entry<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
         stake: StakedSui,
         ctx: &TxContext,
     ): Balance<C> {
+        let validator_pool_id = staking_pool::pool_id(&stake);
+        let stake_activation_epoch = staking_pool::stake_activation_epoch(&stake);
+        let principal = staking_pool::staked_sui_amount(&stake);
         let (stake_balance, fresh_part) = deposit_stake_internal(
             self,
             sui_system,
@@ -298,9 +427,22 @@ module lisuify::stake_pool {
             * ((MAX_BPC - self.fresh_deposit_fee_bpc) as u128)
                 / (MAX_BPC as u128)) as u64);
         let staked_token_amount = get_token_amount(self, stake_balance - fresh_part);
+        let token_mint = fresh_token_amount + staked_token_amount;
+        event::emit(StakeDeposited {
+            stake_pool_id: object::id(self),
+            validator_pool_id,
+            stake_activation_epoch,
+            principal,
+            stake_balance,
+            token_mint,
+            new_curret_sui_balance: self.curret_sui_balance,
+            fresh_deposit_fee_bpc: self.fresh_deposit_fee_bpc,
+            last_update_sui_balance: self.last_update_sui_balance,
+            last_update_token_supply: self.last_update_token_supply,
+        });
         coin::mint_balance(
             &mut self.treasury,
-            fresh_token_amount + staked_token_amount
+            token_mint
         )
     }
 
@@ -322,48 +464,70 @@ module lisuify::stake_pool {
         );
     }
 
+    struct SuiDeposited has copy, drop {
+        stake_pool_id: ID,
+        sui_deposited: u64,
+        token_mint: u64,
+        new_curret_sui_balance: u64,
+        fresh_deposit_fee_bpc: u32,
+        last_update_sui_balance: u64,
+        last_update_token_supply: u64,
+    }
+
     public fun deposit_sui_non_entry<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
+        clock: &Clock,
         sui: Coin<SUI>,
         ctx: &mut TxContext,
     ): Balance<C> {
-        if (coin::value(&sui) >= MIN_STAKING_THRESHOLD
+        assert!(is_updated(self, ctx), EOutdated);
+        let sui_deposited = coin::value(&sui);
+        self.curret_sui_balance = self.curret_sui_balance + sui_deposited;
+        let token_mint = get_token_amount(self, sui_deposited);
+        token_mint = (((token_mint as u128)
+            * ((MAX_BPC - self.fresh_deposit_fee_bpc) as u128)
+            / (MAX_BPC as u128)) as u64);
+        coin::put(&mut self.reserve, sui);
+
+        event::emit(SuiDeposited {
+            stake_pool_id: object::id(self),
+            sui_deposited,
+            token_mint,
+            new_curret_sui_balance: self.curret_sui_balance,
+            fresh_deposit_fee_bpc: self.fresh_deposit_fee_bpc,
+            last_update_sui_balance: self.last_update_sui_balance,
+            last_update_token_supply: self.last_update_token_supply,
+        });
+
+        let reserve_balance = balance::value(&self.reserve);
+        if (reserve_balance >= MIN_STAKING_THRESHOLD
             && option::is_some(&self.staking_validator)
+            && is_staking_reserve_time(self, clock, ctx)
         ) {
-            let stake = sui_system::request_add_stake_non_entry(
-                sui_system,
-                sui,
-                *option::borrow(&self.staking_validator),
-                ctx
-            );
-            deposit_stake_non_entry(
+            let vadalidator_address = *option::borrow(&self.staking_validator);
+            stake_reserve_internal(
                 self,
                 sui_system,
-                stake,
+                vadalidator_address,
+                reserve_balance,
                 ctx
             )
-        } else {
-            assert!(is_updated(self, ctx), EOutdated);
-            self.curret_sui_balance = self.curret_sui_balance + coin::value(&sui);
-            let token_amount = get_token_amount(self, coin::value(&sui));
-            token_amount = (((token_amount as u128)
-                * ((MAX_BPC - self.fresh_deposit_fee_bpc) as u128)
-                / (MAX_BPC as u128)) as u64);
-            coin::put(&mut self.reserve, sui);
-            coin::mint_balance(&mut self.treasury, token_amount)
-        }
+        };
+        coin::mint_balance(&mut self.treasury, token_mint)
     }
 
     public entry fun deposit_sui<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
+        clock: &Clock,
         sui: Coin<SUI>,
         ctx: &mut TxContext,
     ) {
         let balance = deposit_sui_non_entry(
             self,
             sui_system,
+            clock,
             sui,
             ctx
         );
@@ -371,6 +535,20 @@ module lisuify::stake_pool {
             coin::from_balance(balance, ctx),
             ctx
         );
+    }
+
+    struct Withdrawn has copy, drop {
+        stake_pool_id: ID,
+        token_burnt: u64,
+        sui_withdrawn: u64,
+        staked_sui_withdrawn: u64,
+        token_returned: u64,
+        fees_collected: u64,
+        new_curret_sui_balance: u64,
+        fresh_deposit_fee_bpc: u32,
+        withdraw_fee_bpc: u32,
+        last_update_sui_balance: u64,
+        last_update_token_supply: u64,
     }
 
     public fun withdraw_non_entry<C>(
@@ -414,6 +592,7 @@ module lisuify::stake_pool {
             i = i + 1;
         };
 
+        let staked_sui_withdrawn = 0;
         let i = 0;
         while (i < count && result_total + MIN_STAKING_THRESHOLD <= sui_amount) {
             let validator = vector::borrow_mut(&mut self.validators, i);
@@ -427,12 +606,15 @@ module lisuify::stake_pool {
                 let stake_balance = staking_pool::staked_sui_amount(&stake);
                 vector::push_back(&mut staked_result, stake);
                 result_total = result_total + stake_balance;
-                fresh_part = fresh_part + stake_balance
+                fresh_part = fresh_part + stake_balance;
+                staked_sui_withdrawn = staked_sui_withdrawn + stake_balance;
             } else {
                 option::destroy_none(staked)
             };
             i = i + 1;
         };
+
+        let token_returned = 0;
         if (result_total >= sui_amount) {
             // return the rest to the reserve
             balance::join(
@@ -442,10 +624,10 @@ module lisuify::stake_pool {
             result_total = sui_amount;
         } else {
             // return non withdrawable part back as coins
-            let return_amount = get_token_amount(self, sui_amount - result_total);
+            token_returned = get_token_amount(self, sui_amount - result_total);
             balance::join(
                 &mut token_result,
-                balance::split(&mut token_balance, return_amount)
+                balance::split(&mut token_balance, token_returned)
             );
             token_amount = balance::value(&token_balance);
         };
@@ -454,18 +636,35 @@ module lisuify::stake_pool {
             * (self.fresh_deposit_fee_bpc as u128)
             + ((MAX_BPC - 1) as u128))
                 / (MAX_BPC as u128)) as u64);
+        let fees_collected = math::min(withdraw_fee + token_fee, token_amount);
         let fee_balance = balance::split(
             &mut token_balance,
-            math::min(withdraw_fee + token_fee, token_amount)
+            fees_collected
         );
         balance::join(&mut self.fees, fee_balance);
 
+        let token_burnt = balance::value(&token_balance);
         balance::decrease_supply(
             coin::supply_mut(&mut self.treasury),
             token_balance
         );
         
         self.curret_sui_balance = self.curret_sui_balance - result_total;
+
+        event::emit(Withdrawn {
+            stake_pool_id: object::id(self),
+            token_burnt,
+            sui_withdrawn: balance::value(&sui_result),
+            staked_sui_withdrawn,
+            token_returned,
+            fees_collected,
+            new_curret_sui_balance: self.curret_sui_balance,
+            fresh_deposit_fee_bpc: self.fresh_deposit_fee_bpc,
+            withdraw_fee_bpc: self.withdraw_fee_bpc,
+            last_update_sui_balance: self.last_update_sui_balance,
+            last_update_token_supply: self.last_update_token_supply
+        });
+
         (sui_result, staked_result, token_result)
     }
 
@@ -509,7 +708,40 @@ module lisuify::stake_pool {
         }
     }
 
-    public entry fun stake_reserve<C>(
+    struct ReserveStaked has copy, drop {
+        stake_pool_id: ID,
+        validator_pool_id: ID,
+        amount: u64,
+    }
+
+    fun stake_reserve_internal<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        validator_address: address,
+        amount: u64,
+        ctx: &mut TxContext,
+    ) {
+        let stake = sui_system::request_add_stake_non_entry(
+            sui_system,
+            coin::take(&mut self.reserve, amount, ctx),
+            validator_address,
+            ctx
+        );
+        let validator_pool_id = staking_pool::pool_id(&stake);
+        let (_, _) = deposit_stake_internal(
+            self,
+            sui_system,
+            stake,
+            ctx
+        );
+        event::emit(ReserveStaked {
+            stake_pool_id: object::id(self),
+            validator_pool_id,
+            amount
+        })
+    }
+
+    public entry fun forced_stake_reserve<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
         validator_address: address,
@@ -522,18 +754,40 @@ module lisuify::stake_pool {
             EWrongValidatorManagerCap
         );
 
-        let stake = sui_system::request_add_stake_non_entry(
-            sui_system,
-            coin::take(&mut self.reserve, amount, ctx),
-            validator_address,
-            ctx
-        );
-        let (_, _) = deposit_stake_internal(
+        stake_reserve_internal(
             self,
             sui_system,
-            stake,
+            validator_address,
+            amount,
             ctx
+        )
+    }
+
+    public entry fun stake_reserve<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        clock: &Clock,
+        validator_address: address,
+        ctx: &mut TxContext,
+    ) {
+        assert!(
+            is_staking_reserve_time(self, clock, ctx),
+            ETooEarlyToStakeReserve
         );
+        if (option::is_some(&self.staking_validator)) {
+            assert!(
+                *option::borrow(&self.staking_validator) == validator_address,
+                EWrongValidatorAddress,
+            );
+        };
+        let reserve_balance = balance::value(&self.reserve);
+        stake_reserve_internal(
+            self,
+            sui_system,
+            validator_address,
+            reserve_balance,
+            ctx
+        )
     }
 
     public fun get_sui_amount<C>(self: &StakePool<C>, token_amount: u64): u64 {
@@ -560,19 +814,154 @@ module lisuify::stake_pool {
         (res as u64)
     }
 
+    public fun is_staking_reserve_time<C>(
+        self: &StakePool<C>,
+        clock: &Clock,
+        ctx: &TxContext
+    ): bool {
+        clock::timestamp_ms(clock) > tx_context::epoch_timestamp_ms(ctx)
+            + self.keeping_reserve_ms
+    }
+
     public fun staking_validator<C>(self: &StakePool<C>): Option<address> {
         self.staking_validator
     }
 
+    struct StakingValidatorSet has copy, drop {
+        stake_pool_id: ID,
+        vadalidator_address: Option<address>
+    }
+
     public fun set_staking_validator<C>(
         self: &mut StakePool<C>,
-        v: Option<address>,
+        vadalidator_address: Option<address>,
         cap: &ValidatorManagerCap<C>,
     ) {
         assert!(
             object::id(cap) == self.validator_manager_cap_id,
             EWrongValidatorManagerCap
         );
-        self.staking_validator = v;
+        self.staking_validator = vadalidator_address;
+        event::emit(StakingValidatorSet {
+            stake_pool_id: object::id(self),
+            vadalidator_address,
+        })
+    }
+
+    struct FeeWithdrawn has copy, drop {
+        stake_pool_id: ID,
+        amount: u64,
+    }
+
+    public fun withdraw_fees_non_entry<C>(
+        self: &mut StakePool<C>,
+        admin_cap: &AdminCap<C>,
+    ): Balance<C> {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        event::emit(FeeWithdrawn {
+            stake_pool_id: object::id(self),
+            amount: balance::value(&self.fees)
+        });
+        balance::withdraw_all(&mut self.fees)
+    }
+
+    public entry fun withdraw_fees<C>(
+        self: &mut StakePool<C>,
+        admin_cap: &AdminCap<C>,
+        ctx: &mut TxContext,
+    ) {
+        let result = withdraw_fees_non_entry(self, admin_cap);
+        pay::keep(
+            coin::from_balance(result, ctx),
+            ctx
+        )
+    }
+
+    public fun fresh_deposit_fee_bpc<C>(self: &StakePool<C>): u32 {
+        self.fresh_deposit_fee_bpc
+    }
+
+    struct FreshDepositFeeBpcSet has copy, drop {
+        stake_pool_id: ID,
+        fresh_deposit_fee_bpc: u32,
+    }
+
+    public entry fun set_fresh_deposit_fee_bpc<C>(
+        self: &mut StakePool<C>,
+        fresh_deposit_fee_bpc: u32,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.fresh_deposit_fee_bpc = fresh_deposit_fee_bpc;
+        event::emit(FreshDepositFeeBpcSet {
+            stake_pool_id: object::id(self),
+            fresh_deposit_fee_bpc,
+        })
+    }
+
+    public fun withdraw_fee_bpc<C>(self: &StakePool<C>): u32 {
+        self.withdraw_fee_bpc
+    }
+
+    struct WithdrawFeeBpcSet has copy, drop {
+        stake_pool_id: ID,
+        withdraw_fee_bpc: u32,
+    }
+
+    public entry fun set_withdraw_fee_bpc<C>(
+        self: &mut StakePool<C>,
+        withdraw_fee_bpc: u32,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.withdraw_fee_bpc = withdraw_fee_bpc;
+        event::emit(WithdrawFeeBpcSet {
+            stake_pool_id: object::id(self),
+            withdraw_fee_bpc,
+        })
+    }
+
+    public fun rewards_fee_bpc<C>(self: &StakePool<C>): u32 {
+        self.rewards_fee_bpc
+    }
+
+    struct RewardsFeeBpcSet has copy, drop {
+        stake_pool_id: ID,
+        rewards_fee_bpc: u32,
+    }
+
+    public entry fun set_rewards_fee_bpc<C>(
+        self: &mut StakePool<C>,
+        rewards_fee_bpc: u32,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.rewards_fee_bpc = rewards_fee_bpc;
+        event::emit(RewardsFeeBpcSet {
+            stake_pool_id: object::id(self),
+            rewards_fee_bpc,
+        })
+    }
+
+    public fun keeping_reserve_ms<C>(self: &StakePool<C>): u64 {
+        self.keeping_reserve_ms
+    }
+
+    struct KeepingReserveMsSet has copy, drop {
+        stake_pool_id: ID,
+        keeping_reserve_ms: u64,
+    }
+
+    public entry fun set_keeping_reserve_ms<C>(
+        self: &mut StakePool<C>,
+        keeping_reserve_ms: u64,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.keeping_reserve_ms = keeping_reserve_ms;
+        event::emit(KeepingReserveMsSet {
+            stake_pool_id: object::id(self),
+            keeping_reserve_ms,
+        })
     }
 }
