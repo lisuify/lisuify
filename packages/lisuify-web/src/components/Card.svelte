@@ -8,7 +8,7 @@
 </script>
 
 <div
-  class="w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded border border-base-300 bg-base-200 shadow relative"
+  class="w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded-lg border border-base-100 bg-base-100 relative"
 >
   {#if $walletStateAtom.wallets.length > 0}
     <button

@@ -11,7 +11,7 @@
 {#if $walletStateAtom.wallets.length > 0}
   <div class="dropdown dropdown-bottom dropdown-end w-64">
     <button
-      class="btn rounded-full w-full flex justify-between bg-base-200 border-base-300"
+      class="btn rounded-full w-full flex justify-between bg-base-100 border-base-300"
     >
       <div>
         {shortAddress(
@@ -31,7 +31,7 @@
       {#each $walletStateAtom.wallets as wallet, index}
         {#if index !== $walletStateAtom.walletIdx}
           <button
-            class="btn rounded-full w-full flex justify-between bg-base-200 border-base-300"
+            class="btn rounded-full w-full flex justify-between bg-base-100 border-base-300"
             on:click={() => {
               changeWallet(index);
             }}
