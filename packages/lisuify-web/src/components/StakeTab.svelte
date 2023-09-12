@@ -60,8 +60,8 @@
 
 <div class="dropdown dropdown-bottom dropdown-end w-full">
   {#if selectingIndex < 0}
-    <button class="btn btn-outline w-full bg-base-100 flex">
-      <div class="flex-grow">SUI Coins</div>
+    <button class="btn btn-outline w-full bg-base-300 flex">
+      <div class="flex-grow text-xs md:text-sm">SUI Coins</div>
       <div class="flex flex-col items-end text-xs font-thin">
         <div>balance</div>
         <div>
@@ -70,13 +70,13 @@
           )} SUI
         </div>
       </div>
-      <div class="h-full py-1 md:py-2" style="fill:#6fbcf0"><SuiLogo /></div>
+      <div class="h-full py-2" style="fill:#6fbcf0"><SuiLogo /></div>
     </button>
   {:else}
-    <button class="btn btn-outline w-full bg-base-100 flex">
-      <div class="flex-grow">
+    <button class="btn btn-outline w-full bg-base-300 flex">
+      <div class="flex-grow text-xs md:text-sm">
         Staked SUI: {$walletStateAtom.wallets[$walletStateAtom.walletIdx]
-          .stakedSuiObjects[selectingIndex]?.content?.fields?.validatorName}
+          .stakedSuiObjects[selectingIndex]?.validator?.name}
       </div>
       <div class="flex flex-col items-end text-xs font-thin">
         <div>principal</div>
@@ -89,7 +89,7 @@
           )} SUI
         </div>
       </div>
-      <div class="h-full py-1 md:py-2 fill-primary"><SuiLogo /></div>
+      <div class="h-full py-2 fill-primary"><SuiLogo /></div>
     </button>
   {/if}
   <div
@@ -97,12 +97,12 @@
   >
     {#if selectingIndex >= 0}
       <button
-        class="btn btn-outline w-full bg-base-100 flex"
+        class="btn btn-outline w-full bg-base-300 flex"
         on:click={() => {
           selectingIndex = -1;
         }}
       >
-        <div class="flex-grow">SUI Coins</div>
+        <div class="flex-grow text-xs md:text-sm">SUI Coins</div>
         <div class="flex flex-col items-end text-xs font-thin">
           <div>balance</div>
           <div>
@@ -111,19 +111,19 @@
             )} SUI
           </div>
         </div>
-        <div class="h-full py-1 md:py-2" style="fill:#6fbcf0"><SuiLogo /></div>
+        <div class="h-full py-2" style="fill:#6fbcf0"><SuiLogo /></div>
       </button>
     {/if}
     {#each $walletStateAtom.wallets[$walletStateAtom.walletIdx].stakedSuiObjects as stakedSUI, index (stakedSUI.objectId)}
       {#if selectingIndex !== index}
         <button
-          class="btn btn-outline w-full bg-base-100 flex"
+          class="btn btn-outline w-full bg-base-300 flex"
           on:click={() => {
             selectingIndex = index;
           }}
         >
-          <div class="flex-grow">
-            Staked SUI: {stakedSUI.content.fields.validatorName}
+          <div class="flex-grow text-xs md:text-sm">
+            Staked SUI: {stakedSUI?.validator?.name}
           </div>
           <div class="flex flex-col items-end text-xs font-thin">
             <div>principal</div>
@@ -131,7 +131,17 @@
               {suiToString(BigInt(stakedSUI.content?.fields?.principal) || 0)} SUI
             </div>
           </div>
-          <div class="h-full py-1 md:py-2 fill-primary"><SuiLogo /></div>
+          <div class="h-full py-2 fill-primary">
+            {#if stakedSUI.validator?.imageUrl}
+              <img
+                alt={stakedSUI.validator?.name}
+                class="h-full aspect-square rounded-full bg-white"
+                src={stakedSUI.validator?.imageUrl}
+              />
+            {:else}
+              <SuiLogo />
+            {/if}
+          </div>
         </button>
       {/if}
     {/each}
