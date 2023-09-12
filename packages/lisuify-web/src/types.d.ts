@@ -1,4 +1,5 @@
 import type {
+  CoinStruct,
   SuiObjectData,
   SuiSystemStateSummary,
   SuiValidatorSummary,
@@ -25,7 +26,9 @@ export interface StakedSuiObjectData extends SuiObjectData {
 export interface WalletData {
   walletAccount: WalletAccount;
   suiBalance: bigint;
+  liSuiBalance: bigint;
   stakedSuiObjects: StakedSuiObjectData[];
+  liSuiCoins: CoinStruct[];
 }
 
 export interface WalletState {

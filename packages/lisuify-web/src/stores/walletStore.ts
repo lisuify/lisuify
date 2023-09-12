@@ -4,7 +4,11 @@ import {
 } from "@mysten/wallet-kit-core";
 import { atom } from "nanostores";
 import type { StakedSuiObjectData, WalletData, WalletState } from "../types";
-import { getStakedSUIObjects, getWalletBalance } from "../client/rpc";
+import {
+  getLiSuiCoins,
+  getStakedSUIObjects,
+  getSuiBalance,
+} from "../client/rpc";
 import type { SuiObjectData, SuiValidatorSummary } from "@mysten/sui.js/client";
 import { log } from "../utils";
 import { suiSystemStateAtom } from "./suiSystemStateStore";
@@ -33,6 +37,8 @@ export const getWalletAddresses = async () => {
     wallets.push({
       walletAccount: ac,
       suiBalance: BigInt(0),
+      liSuiCoins: [],
+      liSuiBalance: BigInt(0),
       stakedSuiObjects: [],
     });
   });
@@ -45,9 +51,20 @@ export const getWalletAddresses = async () => {
 
 export const getWalletBalances = async () => {
   const newWallets = walletStateAtom.get().wallets.map(async (wallet) => {
-    const coinBalance = await getWalletBalance(wallet.walletAccount.address);
-    wallet.suiBalance = BigInt(coinBalance.totalBalance);
+    // get sui balance
+    const suiCoinBalance = await getSuiBalance(wallet.walletAccount.address);
+    wallet.suiBalance = BigInt(suiCoinBalance.totalBalance);
 
+    // get lisui balance
+    const liSuiCoins = await getLiSuiCoins(wallet.walletAccount.address);
+    wallet.liSuiCoins = liSuiCoins;
+    let liSuiBalance = BigInt(0);
+    liSuiCoins.forEach((coin) => {
+      liSuiBalance += BigInt(coin.balance);
+    });
+    wallet.liSuiBalance = liSuiBalance;
+
+    // get staked sui objects
     const getStakedSUIObjectsResp = await getStakedSUIObjects(
       wallet.walletAccount.address
     );

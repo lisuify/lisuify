@@ -14,10 +14,15 @@ export function round(num: number, decimal: number = 3): number {
   return Math.round(num * div) / div;
 }
 
+export function floor(num: number, decimal: number = 3): number {
+  const div = Math.pow(10, decimal);
+  return Math.floor(num * div) / div;
+}
+
 const suiDecimalDivisor = 10 ** suiDecimal;
 
 export const suiToString = (amount: bigint | number) => {
-  return round(Number(amount) / suiDecimalDivisor).toString();
+  return floor(Number(amount) / suiDecimalDivisor).toString();
 };
 
 export const blockExplorerLink = (digest: string) => {
