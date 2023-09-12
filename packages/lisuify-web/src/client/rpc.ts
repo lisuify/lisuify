@@ -6,6 +6,9 @@ export const getWalletBalance = (address: string) => {
   });
 };
 
+export const getLiSUIBalance = (address: string) => {
+}
+
 export const getStakedSUIObjects = (address: string) => {
   return client.getOwnedObjects({
     owner: address,

@@ -1,6 +1,6 @@
 <script lang="ts"></script>
 
-<div class="w-full max-w-lg stats stats-vertical lg:stats-horizontal border-none shadow-none">
+<div class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg">
   <div class="stat">
     <div class="stat-title">SUI Staking</div>
     <div class="stat-value">31K</div>

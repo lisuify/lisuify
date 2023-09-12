@@ -111,7 +111,7 @@
 
 <div class="dropdown dropdown-bottom dropdown-end w-full">
   {#if selectingIndex < 0}
-    <button class="btn btn-outline w-full bg-base-300 flex">
+    <button class="btn btn-outline w-full bg-base-100 flex">
       <div class="flex-grow text-xs md:text-sm">SUI Coins</div>
       <div class="flex flex-col items-end text-xs font-thin">
         <div>balance</div>
@@ -124,7 +124,7 @@
       <div class="h-full py-2" style="fill:#6fbcf0"><SuiLogo /></div>
     </button>
   {:else}
-    <button class="btn btn-outline w-full bg-base-300 flex">
+    <button class="btn btn-outline w-full bg-base-100 flex">
       <div class="flex-grow text-xs md:text-sm">
         Staked SUI: {$walletStateAtom.wallets[$walletStateAtom.walletIdx]
           .stakedSuiObjects[selectingIndex]?.validator?.name}
@@ -148,7 +148,7 @@
   >
     {#if selectingIndex >= 0}
       <button
-        class="btn btn-outline w-full bg-base-300 flex"
+        class="btn btn-outline w-full bg-base-100 flex"
         on:click={() => {
           selectingIndex = -1;
         }}
@@ -168,7 +168,7 @@
     {#each $walletStateAtom.wallets[$walletStateAtom.walletIdx].stakedSuiObjects as stakedSUI, index (stakedSUI.objectId)}
       {#if selectingIndex !== index}
         <button
-          class="btn btn-outline w-full bg-base-300 flex"
+          class="btn btn-outline w-full bg-base-100 flex"
           on:click={() => {
             selectingIndex = index;
           }}
