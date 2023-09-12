@@ -26,6 +26,7 @@ module lisuify::stake_pool {
     const ENotUpdating: u64 = 11;
     const ESlashed: u64 = 12;
     const ENotAllUpdated: u64 = 13;
+    const EWithdrawCalculationError: u64 = 14;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -251,7 +252,7 @@ module lisuify::stake_pool {
         sui_system: &mut SuiSystemState,
         stake: StakedSui,
         ctx: &TxContext
-    ): (u64, u64) {
+    ): (u64, u64) { // stake_balance, fresh_part
         assert!(is_updated(self, ctx), EOutdated); // requires updated state for up to date liSUI price
         let validator_index = validator_index(self, staking_pool::pool_id(&stake));
         assert!(option::is_some(&validator_index), EValidatorDoesNotExist);
@@ -259,6 +260,7 @@ module lisuify::stake_pool {
             &mut self.validators,
             option::destroy_some(validator_index)
         );
+        let principal = staking_pool::staked_sui_amount(&stake);
         let stake_activation_epoch = staking_pool::stake_activation_epoch(&stake);
         let stake_balance = validator_entry::add_stake(
             validator,
@@ -266,7 +268,13 @@ module lisuify::stake_pool {
             stake,
             ctx
         );
-        (stake_balance, stake_activation_epoch)
+        let epoch = tx_context::epoch(ctx);
+        let fresh_part = if (stake_activation_epoch == epoch + 1) {
+            stake_balance
+        } else {
+            stake_balance -  principal
+        };
+        (stake_balance, fresh_part)
     }
 
     public fun deposit_stake_non_entry<C>(
@@ -275,23 +283,26 @@ module lisuify::stake_pool {
         stake: StakedSui,
         ctx: &TxContext,
     ): Balance<C> {
-        let (stake_balance, stake_activation_epoch) = deposit_stake_internal(
+        let (stake_balance, fresh_part) = deposit_stake_internal(
             self,
             sui_system,
             stake,
             ctx
         );
+        // ignore rewards part until restake rule will be implemented
+        if (fresh_part < stake_balance) {
+            fresh_part = 0;
+        };
         self.curret_sui_balance = self.curret_sui_balance + stake_balance;
 
-        let token_amount = get_token_amount(self, stake_balance);
-        // for fresh stakes
-        let epoch = tx_context::epoch(ctx);
-        if (stake_activation_epoch > epoch) {
-            token_amount = (((token_amount as u128)
-                * ((MAX_BPC - self.fresh_deposit_fee_bpc) as u128)
+        let fresh_token_amount = (((get_token_amount(self, fresh_part) as u128)
+            * ((MAX_BPC - self.fresh_deposit_fee_bpc) as u128)
                 / (MAX_BPC as u128)) as u64);
-        };
-        coin::mint_balance(&mut self.treasury, token_amount)
+        let staked_token_amount = get_token_amount(self, stake_balance - fresh_part);
+        coin::mint_balance(
+            &mut self.treasury,
+            fresh_token_amount + staked_token_amount
+        )
     }
 
     public entry fun deposit_stake<C>(
@@ -370,10 +381,14 @@ module lisuify::stake_pool {
         ctx: &mut TxContext,
     ): Balance<SUI> {
         let token_amount = balance::value(&token_balance);
-        let amount_left = get_sui_amount(
+        let withdraw_fee = ((((token_amount as u128)
+            * (self.withdraw_fee_bpc as u128) + ((MAX_BPC - 1) as u128))
+            / (MAX_BPC as u128)) as u64);
+        let sui_amount = get_sui_amount(
             self,
-            token_amount
+            token_amount - withdraw_fee
         );
+        let amount_left = sui_amount;
         let from_reserve = math::min(amount_left, balance::value(&self.reserve));
         let result = balance::split(
             &mut self.reserve,
@@ -390,40 +405,50 @@ module lisuify::stake_pool {
                 amount_left,
                 ctx,
             );
-            amount_left = amount_left - balance::value(&sui);
+            amount_left = amount_left - math::min(balance::value(&sui), amount_left);
             balance::join(&mut result, sui);
             i = i + 1;
         };
 
-        let token_fee = (((if (amount_left > 0) {
-            get_token_amount(self, balance::value(&result))
-        } else {
-            token_amount
-        } as u128) * (self.fresh_deposit_fee_bpc as u128)
-            + ((MAX_BPC - 1) as u128))
-                / (MAX_BPC as u128) as u64);
-
-        let fee_balance = balance::split(&mut token_balance, token_fee);
-        balance::join(&mut self.fees, fee_balance);
+        let fresh_part = sui_amount - amount_left;
 
         i = 0;
         while (i < count && amount_left > 0) {
             let validator = vector::borrow_mut(&mut self.validators, i);
-            let sui = validator_entry::withdraw(
+            // ignore rewards part until restake rule will be implemented
+            let (sui, _) = validator_entry::withdraw(
                 validator,
                 sui_system,
                 amount_left,
                 ctx,
             );
-            amount_left = amount_left - balance::value(&sui);
+            amount_left = amount_left - math::min(balance::value(&sui), amount_left);
             balance::join(&mut result, sui);
             i = i + 1;
         };
+
+        let token_fee = (((if (fresh_part < sui_amount) {
+            get_token_amount(self, fresh_part)
+        } else {
+            token_amount - withdraw_fee
+        } as u128) * (self.fresh_deposit_fee_bpc as u128)
+            + ((MAX_BPC - 1) as u128))
+                / (MAX_BPC as u128) as u64);
+        let fee_balance = balance::split(
+            &mut token_balance,
+            withdraw_fee + token_fee
+        );
+        balance::join(&mut self.fees, fee_balance);
         balance::decrease_supply(
             coin::supply_mut(&mut self.treasury),
             token_balance
         );
-        self.curret_sui_balance = self.curret_sui_balance - balance::value(&result);
+        assert!(amount_left == 0, EWithdrawCalculationError);
+        // The same as assert!(balance::value(&result) >= sui_amount, EWithdrawCalculationError);
+        // return the rest to the reserve
+        let extra = balance::value(&result) - sui_amount;
+        balance::join(&mut self.reserve, balance::split(&mut result, extra));
+        self.curret_sui_balance = self.curret_sui_balance - sui_amount;
         result
     }
 
