@@ -256,7 +256,7 @@
 <button
   class="btn btn-primary w-full"
   on:click={handleStake}
-  disabled={!!suiAmountError}
+  disabled={suiAmount === "" || !!suiAmountError}
 >
   STAKE
 </button>
