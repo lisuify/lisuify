@@ -13,12 +13,13 @@ import type { SuiObjectData, SuiValidatorSummary } from "@mysten/sui.js/client";
 import { log } from "../utils";
 import { suiSystemStateAtom } from "./suiSystemStateStore";
 
-const suiSystemState = suiSystemStateAtom.get();
 const validatorsMap: { [name: string]: SuiValidatorSummary } = {}; // map pool id to validator summary
-suiSystemState?.activeValidators.forEach((validator) => {
-  validatorsMap[validator.stakingPoolId] = validator;
+suiSystemStateAtom.subscribe((suiSystemState) => {
+  suiSystemState?.activeValidators.forEach((validator) => {
+    validatorsMap[validator.stakingPoolId] = validator;
+  });
+  log("validatorsMap", validatorsMap);
 });
-log("validatorsMap", validatorsMap);
 
 const SUI_WALLET_NAME = "Sui Wallet";
 const defaultWallet = {
