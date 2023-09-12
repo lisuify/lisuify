@@ -424,7 +424,18 @@ module lisuify::validator_entry {
         (result, fresh_part)
     }
 
-    public fun last_update_sui_balance<C>(self: &ValidatorEntry<C>): u64 {
+    public(friend) fun last_update_sui_balance<C>(self: &ValidatorEntry<C>): u64 {
         self.last_update_sui_balance
+    }
+
+    public(friend) fun is_active<C>(self: &ValidatorEntry<C>): bool {
+        self.is_active
+    }
+
+    public(friend) fun set_is_active<C>(
+        self: &mut ValidatorEntry<C>,
+        is_active: bool
+    ) {
+        self.is_active = is_active
     }
 }

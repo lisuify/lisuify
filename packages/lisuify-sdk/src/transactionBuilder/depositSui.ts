@@ -2,7 +2,10 @@ import {
   TransactionArgument,
   TransactionBlock,
 } from '@mysten/sui.js/transactions';
-import {SUI_SYSTEM_STATE_OBJECT_ID} from '@mysten/sui.js/utils';
+import {
+  SUI_CLOCK_OBJECT_ID,
+  SUI_SYSTEM_STATE_OBJECT_ID,
+} from '@mysten/sui.js/utils';
 
 export const depositSui = ({
   lisuifyId,
@@ -23,6 +26,8 @@ export const depositSui = ({
       txb.object(poolId),
       // sui_system
       txb.object(SUI_SYSTEM_STATE_OBJECT_ID),
+      // clock
+      txb.object(SUI_CLOCK_OBJECT_ID),
       // sui
       sui,
     ],

@@ -1,8 +1,8 @@
 export const originalLisuifyId =
-  '0x0afdb9aee992f4f8c300c64fa58eb1169ebae26acd8b513b0614d2d35d367b7d';
+  '0x5062a020ff9521fc297584eb4235abaa9c7b746fae675cc7cad6f8061daf6eb5';
 
 export const lisuifyId =
-  '0xd3558c200309fbecdd751adc36dc31d35628ce71cfdaf1d3e7d427eea5d4fcaf';
+  '0x5062a020ff9521fc297584eb4235abaa9c7b746fae675cc7cad6f8061daf6eb5';
 
 export const stakePoolId =
-  '0x07a2a556f391a8a06d7cd369094b359caebab8b6e2a4c79c9ff81302d52ed778';
+  '0x485d3e8bccd7223c8dac750640fe250719cfd1fdd1050b6f99ec8c4fc96447b4';
