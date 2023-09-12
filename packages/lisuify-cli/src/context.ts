@@ -5,11 +5,13 @@ import * as fs from 'mz/fs';
 import {Ed25519Keypair} from '@mysten/sui.js/keypairs/ed25519';
 import {fromB64} from '@mysten/sui.js/utils';
 import {PRIVATE_KEY_SIZE} from '@mysten/sui.js';
+import {StakePool} from '@lisuify/sdk';
 
 export interface Context {
   provider: SuiClient;
   wallet: Ed25519Keypair;
   dry: boolean;
+  stakePool: StakePool;
 }
 
 export const context: Context = {} as Context;
@@ -19,11 +21,17 @@ export const setupContext = async ({
   env,
   wallet,
   dry = false,
+  lisuifyId,
+  originalLisuifyId,
+  stakePoolId,
 }: {
   config: string;
   env?: string;
   wallet?: string;
   dry?: boolean;
+  lisuifyId: string;
+  originalLisuifyId: string;
+  stakePoolId: string;
 }) => {
   const configData = YAML.parse(
     await fs.readFile(expandTilde(config), 'utf-8')
@@ -62,4 +70,11 @@ export const setupContext = async ({
   }
 
   context.dry = dry;
+
+  context.stakePool = await StakePool.load({
+    provider: context.provider,
+    id: stakePoolId,
+    lisuifyId,
+    originalLisuifyId,
+  });
 };

@@ -288,15 +288,11 @@ module lisuify::validator_entry {
 
     public(friend) fun withdraw_fresh<C>(
         self: &mut ValidatorEntry<C>,
-        sui_system: &mut SuiSystemState,
         max_amount: u64,
         ctx: &mut TxContext,
-    ): Balance<SUI> {
-        if (max_amount == 0) {
-            return balance::zero()
-        };
+    ): Option<StakedSui> {
         if (max_amount < MIN_STAKING_THRESHOLD) {
-            max_amount = MIN_STAKING_THRESHOLD;
+            return option::none()
         };
         let epoch = tx_context::epoch(ctx);
         if (object_table::contains(&self.stakes, epoch + 1)) {
@@ -305,13 +301,15 @@ module lisuify::validator_entry {
                 epoch + 1
             );
             let stake_balance = staking_pool::staked_sui_amount(stake);
-            let source_stake = if (stake_balance >= max_amount + MIN_STAKING_THRESHOLD) {
-                staking_pool::split(
-                    stake,
-                    max_amount,
-                    ctx
+            if (stake_balance >= max_amount + MIN_STAKING_THRESHOLD) {
+                option::some(
+                    staking_pool::split(
+                        stake,
+                        max_amount,
+                        ctx
+                    )
                 )
-            } else {
+            } else if (stake_balance <= max_amount) {
                 let (_, i) = vector::index_of(
                     &self.stake_activation_epochs,
                     &(epoch + 1)
@@ -320,18 +318,15 @@ module lisuify::validator_entry {
                     &mut self.stake_activation_epochs,
                     i
                 );
-                object_table::remove(
+                option::some(object_table::remove(
                     &mut self.stakes,
                     epoch + 1
-                )
-            };
-            sui_system::request_withdraw_stake_non_entry(
-                sui_system,
-                source_stake,
-                ctx
-            )
+                ))
+            } else {
+                option::none()
+            }
         } else {
-            balance::zero()
+            option::none()
         }
     }
 
@@ -358,6 +353,11 @@ module lisuify::validator_entry {
                 max_amount = MIN_STAKING_THRESHOLD;
             };
             let stake_activation_epoch = *vector::borrow(&self.stake_activation_epochs, i);
+            if (stake_activation_epoch == epoch + 1) {
+                // skip fresh stake
+                i = i + 1;
+                continue
+            };
             let stake = object_table::borrow_mut(
                 &mut self.stakes,
                 stake_activation_epoch
@@ -374,10 +374,16 @@ module lisuify::validator_entry {
                 &exchange_rate,
                 max_amount,
             );
+            while (get_sui_amount(&exchange_rate, split_request_pool_tokens) < max_amount) {
+                split_request_pool_tokens = split_request_pool_tokens + 1;
+            };
             let split_request = get_sui_amount(
                 &exchange_rate_at_staking_epoch,
                 split_request_pool_tokens
             );
+            while (get_token_amount(&exchange_rate_at_staking_epoch, split_request) < split_request_pool_tokens) {
+                split_request = split_request + 1;
+            };
             let source_stake = if (principal >= split_request + MIN_STAKING_THRESHOLD) {
                 staking_pool::split(
                     stake,
