@@ -12,7 +12,6 @@
     "astro": "astro"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^7.1.0",
     "@astrojs/svelte": "^4.0.0",
     "@astrojs/tailwind": "^5.0.0",
     "@lisuify/sdk": "workspace:^",
