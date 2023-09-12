@@ -2,18 +2,35 @@
   import SuiLogo from "./icons/SuiLogo.svelte";
   import { walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
-  import type { FormEventHandler } from "svelte/elements";
-  import { depositStakedSUI } from "../client/sc";
+  import { depositSUI, depositStakedSUI } from "../client/sc";
   import { addToastMessage } from "../stores/toastStore";
+  import { suiDecimal } from "../consts";
 
   let selectingIndex = -1;
+  let suiAmountBigint = BigInt(0);
   let suiAmount = "";
+  let suiAmountError = "";
 
-  const handlAmount: FormEventHandler<HTMLInputElement> = (e) => {
-    suiAmount = e.currentTarget.value;
+  const handlAmount = (target: string) => {
+    suiAmountError = "";
+    suiAmount = target;
+    if (Number(suiAmount) < 0.1) {
+      suiAmountError = "SUI amount should more than 1";
+      return;
+    }
+    if (
+      Number.isFinite(suiAmount) ||
+      Number.isNaN(suiAmount) ||
+      Number.isNaN(Number.parseFloat(suiAmount))
+    ) {
+      suiAmountError = "SUI amount is invalid";
+      return;
+    }
+    suiAmountBigint = BigInt(Number(suiAmount) * 10 ** suiDecimal);
   };
 
   const handleStake = () => {
+    // Stake Staked SUI Object
     if (selectingIndex >= 0) {
       const stakedSuiObjects =
         $walletStateAtom.wallets[$walletStateAtom.walletIdx].stakedSuiObjects[
@@ -50,11 +67,45 @@
             return;
           }
           console.error("depositStakedSUI error:", e);
-          addToastMessage(`Error to stake: ${e.message}`, "error");
+          addToastMessage(
+            `Error to stake ${suiString} SUI: ${e.message}`,
+            "error"
+          );
         });
 
       return;
     }
+
+    // stake SUI coins
+    depositSUI(suiAmountBigint)
+      .then((object) => {
+        if (object.errors) {
+          log("depositSUI errors:", object.errors);
+          addToastMessage(
+            `Error to stake: ${object.errors}`,
+            "error",
+            blockExplorerLink(object.digest)
+          );
+          return;
+        }
+        log("depositSUI success:", object);
+        addToastMessage(
+          `Successfully staked ${suiAmount} SUI!`,
+          "success",
+          blockExplorerLink(object.digest)
+        );
+      })
+      .catch((e: Error) => {
+        if (e.message.includes("Rejected from user")) {
+          addToastMessage("Rejected by the user", "info");
+          return;
+        }
+        console.error("depositSUI error:", e);
+        addToastMessage(
+          `Error to stake ${suiAmount} SUI: ${e.message}`,
+          "error"
+        );
+      });
   };
 </script>
 
@@ -149,29 +200,42 @@
 </div>
 
 {#if selectingIndex < 0}
-  <div class="flex w-full p-0 btn-group h-12 input input-bordered">
+  <div
+    class="flex w-full p-0 btn-group h-12 input input-bordered {suiAmountError &&
+      'border-error'}"
+  >
     <div class="p-2 md:p-3" style="fill:#6fbcf0"><SuiLogo /></div>
     <input
       type="number"
       placeholder="SUI amount"
       class="flex-grow px-2 bg-base-100 w-full outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       value={suiAmount}
-      on:input={handlAmount}
+      on:input={(e) => {
+        handlAmount(e.currentTarget.value);
+      }}
     />
     <button
       class="btn btn-ghost primary h-full"
       on:click={() => {
-        suiAmount = suiToString(
-          Math.min(
-            Number(
-              $walletStateAtom.wallets[$walletStateAtom.walletIdx].suiBalance
-            ) - 10000000,
-            0
+        handlAmount(
+          suiToString(
+            Math.max(
+              Number(
+                $walletStateAtom.wallets[$walletStateAtom.walletIdx].suiBalance
+              ) -
+                10 ** 8,
+              0
+            )
           )
         );
       }}>MAX</button
     >
   </div>
+  {#if suiAmountError}
+    <div class="flex w-full p-0 h-12 text-error justify-center items-center">
+      {suiAmountError}
+    </div>
+  {/if}
 {/if}
 
 <div class="flex justify-between w-full">
@@ -189,4 +253,10 @@
   <div>5.5 %</div>
 </div>
 
-<button class="btn btn-primary w-full" on:click={handleStake}>STAKE</button>
+<button
+  class="btn btn-primary w-full"
+  on:click={handleStake}
+  disabled={!!suiAmountError}
+>
+  STAKE
+</button>

@@ -41,7 +41,7 @@
     <div
       class="alert alert-{toast.status} flex justify-between gap-2"
       in:fade|global={{ duration: 300 }}
-      out:fly|global={{ duration: 500, x: 100, opacity: 0 }}
+      out:fly|global={{ duration: 500, x: 300, opacity: 0 }}
       style={toast.visible ? "" : "display: none;"}
     >
       <span>{toast.text}</span>

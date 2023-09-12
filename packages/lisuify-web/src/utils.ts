@@ -1,4 +1,4 @@
-import { network } from "./consts";
+import { network, suiDecimal } from "./consts";
 
 export const log = (message?: any, ...optionalParams: any[]) => {
   if (network !== "devnet") return;
@@ -14,10 +14,10 @@ export function round(num: number, decimal: number = 3): number {
   return Math.round(num * div) / div;
 }
 
-const suiDecimal = 10 ** 9;
+const suiDecimalDivisor = 10 ** suiDecimal;
 
 export const suiToString = (amount: bigint | number) => {
-  return round(Number(amount) / suiDecimal).toString();
+  return round(Number(amount) / suiDecimalDivisor).toString();
 };
 
 export const blockExplorerLink = (digest: string) => {

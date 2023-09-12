@@ -10,7 +10,9 @@
 
 {#if $walletStateAtom.wallets.length > 0}
   <div class="dropdown dropdown-bottom dropdown-end w-64">
-    <button class="btn rounded-full w-full flex justify-between bg-base-200 border-base-300">
+    <button
+      class="btn rounded-full w-full flex justify-between bg-base-200 border-base-300"
+    >
       <div>
         {shortAddress(
           $walletStateAtom.wallets[$walletStateAtom.walletIdx].walletAccount
@@ -38,7 +40,7 @@
               {shortAddress(wallet.walletAccount.address)}
             </div>
             <div>
-              {`${round(Number(wallet.suiBalance) / 10 ** 9)} SUI`}
+              {`${suiToString(wallet.suiBalance)} SUI`}
             </div>
           </button>
         {/if}
