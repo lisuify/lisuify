@@ -1,11 +1,11 @@
 import {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 
 export const getTokenCoins = async ({
-  lisuifyId,
+  originalLisuifyId,
   provider,
   owner,
 }: {
-  lisuifyId: string;
+  originalLisuifyId: string;
   provider: SuiClient;
   owner: string;
 }) => {
@@ -14,7 +14,7 @@ export const getTokenCoins = async ({
   for (;;) {
     const r = await provider.getCoins({
       owner,
-      coinType: `${lisuifyId}::coin::COIN`,
+      coinType: `${originalLisuifyId}::coin::COIN`,
       cursor,
     });
     result.push(...r.data);

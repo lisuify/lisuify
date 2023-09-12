@@ -16,6 +16,7 @@ import {withdraw} from '../transactionBuilder/withdraw';
 export class StakePool {
   private constructor(
     public readonly lisuifyId: string,
+    public readonly originalLisuifyId: string,
     public readonly id: string,
     private _adminCapId: string,
     private _validatorManagerCapId: string,
@@ -83,10 +84,12 @@ export class StakePool {
   static async load({
     provider,
     lisuifyId,
+    originalLisuifyId,
     id,
   }: {
     provider: SuiClient;
     lisuifyId: string;
+    originalLisuifyId: string;
     id: string;
   }) {
     const object = await provider.getObject({
@@ -105,9 +108,8 @@ export class StakePool {
     }
 
     if (
-      !/^0x[0-9a-fA-F]+::stake_pool::StakePool<0x[0-9a-fA-F]+::coin::COIN>$/.test(
-        object.data.content.type
-      )
+      object.data.content.type !==
+      `${originalLisuifyId}::stake_pool::StakePool<${originalLisuifyId}::coin::COIN>`
     ) {
       throw new Error(`Unexpected object type ${object.data.content.type}`);
     }
@@ -118,6 +120,7 @@ export class StakePool {
 
     return new StakePool(
       lisuifyId,
+      originalLisuifyId,
       id,
       data.admin_cap_id as string,
       data.validator_manager_cap_id as string,
