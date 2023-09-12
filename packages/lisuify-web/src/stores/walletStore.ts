@@ -59,8 +59,7 @@ export const getWalletBalances = async () => {
     });
     wallet.stakedSuiObjects = stakedSuiObjects as StakedSuiObjectData[];
     wallet.stakedSuiObjects = wallet.stakedSuiObjects.map((stakedSui) => {
-      stakedSui.content.fields.validatorName =
-        validatorsMap[stakedSui.content.fields.pool_id]?.name;
+      stakedSui.validator = validatorsMap[stakedSui.content.fields.pool_id];
       return stakedSui;
     });
 

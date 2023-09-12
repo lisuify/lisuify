@@ -2,12 +2,17 @@ import { persistentAtom } from "@nanostores/persistent";
 import type { SuiSystemStateSummaryData } from "../types";
 import { getLatestSuiSystemState } from "../client/rpc";
 import { log } from "../utils";
+import { network } from "../consts";
 
 export const suiSystemStateAtom =
-  persistentAtom<SuiSystemStateSummaryData | null>("suiSystemStateAtom", null, {
-    encode: JSON.stringify,
-    decode: JSON.parse,
-  });
+  persistentAtom<SuiSystemStateSummaryData | null>(
+    "suiSystemStateAtom" + network,
+    null,
+    {
+      encode: JSON.stringify,
+      decode: JSON.parse,
+    }
+  );
 
 const suiSystemState = suiSystemStateAtom.get();
 log("suiSystemState", suiSystemState);

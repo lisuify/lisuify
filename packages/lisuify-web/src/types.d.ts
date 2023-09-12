@@ -1,6 +1,7 @@
 import type {
   SuiObjectData,
   SuiSystemStateSummary,
+  SuiValidatorSummary,
 } from "@mysten/sui.js/client";
 import type { WalletAccount } from "@mysten/wallet-standard";
 
@@ -14,11 +15,11 @@ export interface StakedSuiObjectData extends SuiObjectData {
       pool_id: string;
       principal: string;
       stake_activation_epoch: string;
-      validatorName?: string; // custom type
-    };
+    }; // custom fields for staked sui object
     hasPublicTransfer: boolean;
     type: string;
   };
+  validator?: SuiValidatorSummary; // custom type
 }
 
 export interface WalletData {

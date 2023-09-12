@@ -4,14 +4,13 @@ import { lisuifyId, stakePoolId } from "../consts";
 import { client } from "./client";
 import { walletKit } from "../stores/walletStore";
 
-const stakePool = await StakePool.load({
-  provider: client,
-  lisuifyId: lisuifyId,
-  id: stakePoolId,
-});
-
 export const depositSUI = async (amount: bigint) => {
   const txb = new TransactionBlock();
+  const stakePool = await StakePool.load({
+    provider: client,
+    lisuifyId: lisuifyId,
+    id: stakePoolId,
+  });
   stakePool.depositSui({ amount, txb });
 
   return walletKit.signAndExecuteTransactionBlock({
@@ -24,6 +23,11 @@ export const depositSUI = async (amount: bigint) => {
 
 export const depositStakedSUI = async ({ objectId }: { objectId: string }) => {
   const txb = new TransactionBlock();
+  const stakePool = await StakePool.load({
+    provider: client,
+    lisuifyId: lisuifyId,
+    id: stakePoolId,
+  });
   stakePool.depositStake({
     stake: objectId,
     txb,
