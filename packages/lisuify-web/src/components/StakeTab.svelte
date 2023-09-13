@@ -2,7 +2,7 @@
   import SuiLogo from "./icons/SuiLogo.svelte";
   import { walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
-  import { depositSUI, depositStakedSUI } from "../client/sc";
+  import { callWallet, depositSUI, depositStakedSUI } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
   import { suiDecimal } from "../consts";
 
@@ -29,7 +29,7 @@
     suiAmountBigint = BigInt(Number(suiAmount) * 10 ** suiDecimal);
   };
 
-  const handleStake = () => {
+  const handleStake = async () => {
     // Stake Staked SUI Object
     if (selectingIndex >= 0) {
       const stakedSuiObjects =
@@ -41,9 +41,11 @@
         BigInt(stakedSuiObjects.content?.fields?.principal) || 0
       );
 
-      depositStakedSUI({
+      const txb = await depositStakedSUI({
         objectId: stakedSuiObjects.objectId,
-      })
+      });
+
+      callWallet(txb)
         .then((object) => {
           if (object.errors) {
             log("depositStakedSUI errors:", object.errors);
@@ -77,7 +79,9 @@
     }
 
     // stake SUI coins
-    depositSUI(suiAmountBigint)
+    const txb = await depositSUI(suiAmountBigint);
+
+    callWallet(txb)
       .then((object) => {
         if (object.errors) {
           log("depositSUI errors:", object.errors);
@@ -140,7 +144,19 @@
           )} SUI
         </div>
       </div>
-      <div class="h-full py-2 fill-primary"><SuiLogo /></div>
+      <div class="h-full py-2 fill-primary">
+        {#if $walletStateAtom.wallets[$walletStateAtom.walletIdx]?.stakedSuiObjects[selectingIndex].validator?.imageUrl}
+          <img
+            alt={$walletStateAtom.wallets[$walletStateAtom.walletIdx]
+              ?.stakedSuiObjects[selectingIndex].validator?.name}
+            class="h-full aspect-square rounded-full bg-white"
+            src={$walletStateAtom.wallets[$walletStateAtom.walletIdx]
+              ?.stakedSuiObjects[selectingIndex].validator?.imageUrl}
+          />
+        {:else}
+          <SuiLogo />
+        {/if}
+      </div>
     </button>
   {/if}
   <div
@@ -204,7 +220,7 @@
     class="flex w-full p-0 btn-group h-12 input input-bordered {suiAmountError &&
       'border-error'}"
   >
-    <div class="p-2 md:p-3" style="fill:#6fbcf0"><SuiLogo /></div>
+    <div class="p-2" style="fill:#6fbcf0"><SuiLogo /></div>
     <input
       type="number"
       placeholder="SUI amount"

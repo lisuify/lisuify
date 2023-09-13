@@ -15,12 +15,7 @@ export const depositSUI = async (amount: bigint) => {
   });
   stakePool.depositSui({ amount, txb });
 
-  return walletKit.signAndExecuteTransactionBlock({
-    transactionBlock: txb,
-    options: {
-      showEffects: true,
-    },
-  });
+  return txb;
 };
 
 export const depositStakedSUI = async ({ objectId }: { objectId: string }) => {
@@ -36,12 +31,7 @@ export const depositStakedSUI = async ({ objectId }: { objectId: string }) => {
     txb,
   });
 
-  return walletKit.signAndExecuteTransactionBlock({
-    transactionBlock: txb,
-    options: {
-      showEffects: true,
-    },
-  });
+  return txb;
 };
 
 export const withdrawSUI = async (liSuiCoins: CoinStruct[], amount: bigint) => {
@@ -54,6 +44,26 @@ export const withdrawSUI = async (liSuiCoins: CoinStruct[], amount: bigint) => {
   });
   stakePool.withdraw({ coins: liSuiCoins, amount, txb });
 
+  return txb;
+};
+
+export const dryRunTransactionBlock = async (txb: TransactionBlock) => {
+  return client.dryRunTransactionBlock({
+    transactionBlock: txb.serialize(),
+  });
+};
+
+export const getLiSUIRatio = async () => {
+  const stakePool = await StakePool.load({
+    provider: client,
+    originalLisuifyId: originalLisuifyId,
+    lisuifyId: lisuifyId,
+    id: stakePoolId,
+  });
+  return stakePool.lastUpdateSuiBalance / stakePool.lastUpdateTokenSupply;
+};
+
+export const callWallet = async (txb: TransactionBlock) => {
   return walletKit.signAndExecuteTransactionBlock({
     transactionBlock: txb,
     options: {

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import SuiLogo from "./icons/SuiLogo.svelte";
+  import LiSuiLogo from "./icons/LiSuiLogo.svelte";
   import { walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
-  import { withdrawSUI } from "../client/sc";
+  import { callWallet, withdrawSUI } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
   import { suiDecimal } from "../consts";
 
@@ -25,12 +25,14 @@
     liSuiAmountBigint = BigInt(Number(liSuiAmount) * 10 ** suiDecimal);
   };
 
-  const handleStake = () => {
+  const handleStake = async () => {
     // stake SUI coins
-    withdrawSUI(
+    const txb = await withdrawSUI(
       $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiCoins,
       liSuiAmountBigint
-    )
+    );
+
+    callWallet(txb)
       .then((object) => {
         if (object.errors) {
           log("withdrawSUI errors:", object.errors);
@@ -71,7 +73,7 @@
   class="flex w-full p-0 btn-group h-12 input input-bordered {liSuiAmountError &&
     'border-error'}"
 >
-  <div class="p-2 md:p-3" style="fill:#6fbcf0"><SuiLogo /></div>
+  <div class="p-2" style="fill:#6fbcf0"><LiSuiLogo /></div>
   <input
     type="number"
     placeholder="liSUI amount"
@@ -100,6 +102,16 @@
     {liSuiAmountError}
   </div>
 {/if}
+
+<div class="flex justify-between w-full">
+  <div>You will receive</div>
+  <div>0 SUI</div>
+</div>
+
+<div class="flex justify-between w-full">
+  <div>Exchange rate</div>
+  <div>1 liSUI = 1.01 SUI</div>
+</div>
 
 <button
   class="btn btn-primary w-full"

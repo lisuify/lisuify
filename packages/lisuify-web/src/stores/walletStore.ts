@@ -8,7 +8,7 @@ import {
   getLiSuiCoins,
   getStakedSUIObjects,
   getSuiBalance,
-} from "../client/rpc";
+} from "../client/sui";
 import type { SuiObjectData, SuiValidatorSummary } from "@mysten/sui.js/client";
 import { log } from "../utils";
 import { suiSystemStateAtom } from "./suiSystemStateStore";
