@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { loadingWalletDataAtom } from "../stores/loadingStore";
   import {
     disconnectWallet,
     walletStateAtom,
@@ -9,7 +10,10 @@
 </script>
 
 {#if $walletStateAtom.wallets.length > 0}
-  <div class="dropdown dropdown-bottom dropdown-end w-64">
+  <div
+    class="dropdown dropdown-bottom dropdown-end w-60 {$loadingWalletDataAtom &&
+      'animate-pulse blur-sm pointer-events-none'}"
+  >
     <button
       class="btn rounded-full w-full flex justify-between bg-base-100 border-base-300"
     >
@@ -19,10 +23,19 @@
             .address
         )}
       </div>
-      <div>
-        {`${suiToString(
-          $walletStateAtom.wallets[$walletStateAtom.walletIdx].suiBalance
-        )} SUI`}
+      <div class="grid grid-cols-2 gap-x-2 text-xs text-right">
+        <div>
+          {suiToString(
+            $walletStateAtom.wallets[$walletStateAtom.walletIdx].suiBalance
+          )}
+        </div>
+        <div class="text-left">SUI</div>
+        <div>
+          {suiToString(
+            $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiBalance
+          )}
+        </div>
+        <div>liSUI</div>
       </div>
     </button>
     <div
@@ -39,8 +52,15 @@
             <div>
               {shortAddress(wallet.walletAccount.address)}
             </div>
-            <div>
-              {`${suiToString(wallet.suiBalance)} SUI`}
+            <div class="grid grid-cols-2 gap-x-2 text-xs text-right">
+              <div>
+                {suiToString(wallet.suiBalance)}
+              </div>
+              <div class="text-left">SUI</div>
+              <div>
+                {suiToString(wallet.liSuiBalance)}
+              </div>
+              <div>liSUI</div>
             </div>
           </button>
         {/if}

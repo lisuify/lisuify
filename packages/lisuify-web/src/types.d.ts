@@ -36,4 +36,8 @@ export interface WalletState {
   walletIdx: number;
 }
 
+export interface Stats {
+  liSuiRatio: bigint;
+}
+
 export interface SuiSystemStateSummaryData extends SuiSystemStateSummary {}
