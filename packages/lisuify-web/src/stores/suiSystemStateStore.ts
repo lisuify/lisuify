@@ -1,6 +1,6 @@
 import { persistentAtom } from "@nanostores/persistent";
 import type { SuiSystemStateSummaryData } from "../types";
-import { getLatestSuiSystemState } from "../client/rpc";
+import { getLatestSuiSystemState } from "../client/sui";
 import { log } from "../utils";
 import { network } from "../consts";
 
