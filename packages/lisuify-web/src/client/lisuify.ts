@@ -4,15 +4,27 @@ import { lisuifyId, originalLisuifyId, stakePoolId } from "../consts";
 import { client } from "./client";
 import { walletKit } from "../stores/walletStore";
 import type { CoinStruct } from "@mysten/sui.js/client";
+import { addToastMessage } from "../stores/toastStore";
 
-export const depositSUI = async (amount: bigint) => {
-  const txb = new TransactionBlock();
-  const stakePool = await StakePool.load({
+let stakePool: StakePool;
+
+const initialStakePool = async () => {
+  stakePool = await StakePool.load({
     provider: client,
     originalLisuifyId: originalLisuifyId,
     lisuifyId: lisuifyId,
     id: stakePoolId,
   });
+};
+
+try {
+  await initialStakePool();
+} catch (e) {
+  addToastMessage(`Failed to initialize stake pool: ${e}`, "error");
+}
+
+export const depositSUI = async (amount: bigint) => {
+  const txb = new TransactionBlock();
   stakePool.depositSui({ amount, txb });
 
   return txb;
@@ -20,12 +32,7 @@ export const depositSUI = async (amount: bigint) => {
 
 export const depositStakedSUI = async ({ objectId }: { objectId: string }) => {
   const txb = new TransactionBlock();
-  const stakePool = await StakePool.load({
-    provider: client,
-    originalLisuifyId: originalLisuifyId,
-    lisuifyId: lisuifyId,
-    id: stakePoolId,
-  });
+
   stakePool.depositStake({
     stake: objectId,
     txb,
@@ -36,12 +43,7 @@ export const depositStakedSUI = async ({ objectId }: { objectId: string }) => {
 
 export const withdrawSUI = async (liSuiCoins: CoinStruct[], amount: bigint) => {
   const txb = new TransactionBlock();
-  const stakePool = await StakePool.load({
-    provider: client,
-    originalLisuifyId: originalLisuifyId,
-    lisuifyId: lisuifyId,
-    id: stakePoolId,
-  });
+
   stakePool.withdraw({ coins: liSuiCoins, amount, txb });
 
   return txb;
@@ -54,13 +56,13 @@ export const dryRunTransactionBlock = async (txb: TransactionBlock) => {
 };
 
 export const getLiSUIRatio = async () => {
-  const stakePool = await StakePool.load({
-    provider: client,
-    originalLisuifyId: originalLisuifyId,
-    lisuifyId: lisuifyId,
-    id: stakePoolId,
-  });
-  return stakePool.lastUpdateSuiBalance / stakePool.lastUpdateTokenSupply;
+  // TODO fix this
+  console.log("stakePool.lastUpdateSuiBalance", stakePool.lastUpdateSuiBalance);
+  console.log(
+    "stakePool.lastUpdateTokenSupply",
+    stakePool.lastUpdateTokenSupply
+  );
+  return BigInt(101);
 };
 
 export const callWallet = async (txb: TransactionBlock) => {

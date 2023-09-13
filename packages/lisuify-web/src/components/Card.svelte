@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
+  import { loadingWalletDataAtom } from "../stores/loadingStore";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
   import ConnectWalletButton from "./ConnectWalletButton.svelte";
   import StakeTab from "./StakeTab.svelte";
@@ -8,7 +10,8 @@
 </script>
 
 <div
-  class="w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded-lg border border-base-100 bg-base-100 relative"
+  class="{$loadingWalletDataAtom &&
+    'animate-pulse blur-sm pointer-events-none'} w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded-lg border border-base-100 bg-base-100 relative"
 >
   {#if $walletStateAtom.wallets.length > 0}
     <button
@@ -49,9 +52,23 @@
       </button>
     </div>
     {#if isStake}
-      <StakeTab />
+      <div
+        class="w-full flex flex-col gap-4 justify-center items-center"
+        in:fade={{
+          duration: 300,
+        }}
+      >
+        <StakeTab />
+      </div>
     {:else}
-      <UnstakeTab />
+      <div
+        class="w-full flex flex-col gap-4 justify-center items-center"
+        in:fade={{
+          duration: 300,
+        }}
+      >
+        <UnstakeTab />
+      </div>
     {/if}
   {:else}
     <div class="h-48 flex flex-col justify-evenly">

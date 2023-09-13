@@ -1,6 +1,6 @@
 <script lang="ts">
   import SuiLogo from "./icons/SuiLogo.svelte";
-  import { walletStateAtom } from "../stores/walletStore";
+  import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
   import { callWallet, depositSUI, depositStakedSUI } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
@@ -93,6 +93,7 @@
           return;
         }
         log("depositSUI success:", object);
+        getWalletBalances();
         addToastMessage(
           `Successfully staked ${suiAmount} SUI!`,
           "success",
@@ -272,7 +273,7 @@
 <button
   class="btn btn-primary w-full"
   on:click={handleStake}
-  disabled={suiAmount === "" || !!suiAmountError}
+  disabled={selectingIndex < 0 && (suiAmount === "" || !!suiAmountError)}
 >
   STAKE
 </button>

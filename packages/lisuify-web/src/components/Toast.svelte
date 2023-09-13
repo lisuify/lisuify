@@ -40,8 +40,8 @@
   {#each toasts as toast}
     <div
       class="alert alert-{toast.status} flex justify-between gap-2"
-      in:fade|global={{ duration: 300 }}
-      out:fly|global={{ duration: 500, x: 300, opacity: 0 }}
+      in:fade|global={{ duration: 100 }}
+      out:fly|global={{ duration: 1000, x: 500, opacity: 0 }}
       style={toast.visible ? "" : "display: none;"}
     >
       <span>{toast.text}</span>

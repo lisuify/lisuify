@@ -1,6 +1,6 @@
 <script lang="ts">
   import LiSuiLogo from "./icons/LiSuiLogo.svelte";
-  import { walletStateAtom } from "../stores/walletStore";
+  import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
   import { callWallet, withdrawSUI } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
@@ -44,6 +44,7 @@
           return;
         }
         log("withdrawSUI success:", object);
+        getWalletBalances();
         addToastMessage(
           `Successfully unstaked ${liSuiAmount} liSUI!`,
           "success",

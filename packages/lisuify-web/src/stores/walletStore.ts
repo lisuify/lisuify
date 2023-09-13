@@ -12,6 +12,8 @@ import {
 import type { SuiObjectData, SuiValidatorSummary } from "@mysten/sui.js/client";
 import { log } from "../utils";
 import { suiSystemStateAtom } from "./suiSystemStateStore";
+import { loadingWalletDataAtom } from "./loadingStore";
+import { addToastMessage } from "./toastStore";
 
 const validatorsMap: { [name: string]: SuiValidatorSummary } = {}; // map pool id to validator summary
 suiSystemStateAtom.subscribe((suiSystemState) => {
@@ -86,12 +88,19 @@ export const getWalletBalances = async () => {
     return wallet;
   });
 
-  Promise.all(newWallets).then((wallets) => {
-    walletStateAtom.set({
-      wallets: wallets,
-      walletIdx: 0,
+  loadingWalletDataAtom.set(true);
+  Promise.all(newWallets)
+    .then((wallets) => {
+      walletStateAtom.set({
+        wallets: wallets,
+        walletIdx: 0,
+      });
+
+      loadingWalletDataAtom.set(false);
+    })
+    .catch((e) => {
+      addToastMessage(`Error to get wallet data: ${e}`, "error");
     });
-  });
 };
 
 export const connectWallet = async () => {
