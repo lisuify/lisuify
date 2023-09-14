@@ -1,6 +1,6 @@
 <script lang="ts">
   import { statsAtom } from "../stores/statsStore";
-  import { floor, round, suiToNumber, suiToString } from "../utils";
+  import { round, suiToNumber, suiToString } from "../utils";
 </script>
 
 <div

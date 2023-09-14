@@ -19,20 +19,20 @@ const { title, headings } = Astro.props;
   <main class="grid grid-cols-12">
     <aside
       id="docs_nav"
-      class="max-md:fixed hidden md:block order-1 md:-order-1 col-span-3"
+      class="max-lg:fixed hidden lg:block order-1 lg:-order-1 col-span-3"
       data-pagefind-ignore
     >
       <div
-        class="pr-16 w-5/6 md:w-1/4 h-screen fixed overflow-y-auto overflow-x-hidden bg-base-200"
+        class="pr-16 w-5/6 lg:w-1/4 h-screen fixed overflow-y-auto overflow-x-hidden bg-base-200"
       >
         <button
           id="close"
-          class="md:hidden float-right"
+          class="lg:hidden float-right"
           aria-label="Close navigation"
         >
           <Icon name="mdi:close" class="-mr-8 mt-4 w-8 h-8" />
         </button>
-        <div class="md:float-right w-full max-md:py-4 px-8 md:px-4">
+        <div class="lg:float-right w-full max-lg:py-4 px-8 lg:px-4">
           {
             Object.keys(SIDE_MENU).map((section) => {
               return (
@@ -44,7 +44,7 @@ const { title, headings } = Astro.props;
                       class={`relative block py-2 px-4 transition-colors
                     ${
                       Astro.url.pathname === path &&
-                      'after:content-[""] after:hidden md:after:block after:w-3 after:h-3 after:absolute after:top-4 after:rotate-45 after:right-[-5.4rem]'
+                      'after:content-[""] after:hidden lg:after:block after:w-3 after:h-3 after:absolute after:top-4 after:rotate-45 after:right-[-5.4rem]'
                     }`}
                     >
                       {docs.find((doc) => path.endsWith(doc.slug))?.data.title}
@@ -69,11 +69,11 @@ const { title, headings } = Astro.props;
       </script>
     </aside>
 
-    <div class="col-span-12 md:col-span-6">
+    <div class="col-span-12 lg:col-span-6">
       <article class="px-8 pb-16 mx-auto prose max-w-2xl prose-sky">
         <button
           id="open"
-          class="mt-4 md:hidden border-2 w-10 h-10 pl-0.5 rounded-lg"
+          class="mt-4 lg:hidden border-2 w-10 h-10 pl-0.5 rounded-lg"
           aria-label="Navigate docs"
         >
           <Icon name="mdi:menu" class="w-8 h-8" />
@@ -83,7 +83,7 @@ const { title, headings } = Astro.props;
       </article>
     </div>
 
-    <aside class="hidden md:block relative col-span-3" data-pagefind-ignore>
+    <aside class="hidden lg:block relative col-span-3" data-pagefind-ignore>
       <div id="_anchor" class="fixed top-0 py-24 px-4">
         <h1 class="text-xl my-4">On This Page</h1>
         {

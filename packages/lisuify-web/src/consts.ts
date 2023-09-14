@@ -7,8 +7,6 @@ export const githubLink = "https://github.com/lisuify/lisuify";
 export const network: "mainnet" | "testnet" | "devnet" | "localnet" =
   import.meta.env.PUBLIC_NETWORK;
 
-export const suiDecimal = 9;
-
 export const originalLisuifyId = import.meta.env.PUBLIC_ORIGINAL_LISUIFY_ID;
 
 export const lisuifyId = import.meta.env.PUBLIC_LISUIFY_ID;

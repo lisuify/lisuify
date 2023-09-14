@@ -5,13 +5,13 @@
     walletStateAtom,
     changeWallet,
   } from "../stores/walletStore";
-  import { round, shortAddress, suiToString } from "../utils";
+  import { shortAddress, suiToString } from "../utils";
   import ConnectWalletButton from "./ConnectWalletButton.svelte";
 </script>
 
 {#if $walletStateAtom.wallets.length > 0}
   <div
-    class="dropdown dropdown-bottom dropdown-end w-64 {$loadingWalletDataAtom &&
+    class="dropdown dropdown-bottom dropdown-end w-72 {$loadingWalletDataAtom &&
       'animate-pulse blur-sm pointer-events-none'}"
   >
     <button
