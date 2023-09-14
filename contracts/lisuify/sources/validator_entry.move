@@ -19,6 +19,9 @@ module lisuify::validator_entry {
     const EDeactivated: u64 = 14;
     const ENotEnoughRewards: u64 = 15; // TODO: just not unstake in this case
     const ESlashed: u64 = 16;
+    const ETooEarlyToRestake: u64 = 17;
+    const ECanNotFoundStake: u64 = 18;
+    const ERestakeRequired: u64 = 19;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -27,7 +30,9 @@ module lisuify::validator_entry {
         id: UID,
         stake_pool_id: ID,
         validator_pool_id: ID,
+        validator_address: address,
         is_active: bool,
+        restake_cooldown: u64,
         last_update_epoch: u64,
         last_update_sui_balance: u64,
         stakes: ObjectTable<u64, StakedSui>, // activation_epoch -> StakedSui
@@ -37,6 +42,8 @@ module lisuify::validator_entry {
     public(friend) fun new<C>(
         stake_pool_id: ID,
         validator_pool_id: ID,
+        validator_address: address,
+        restake_cooldown: u64,
         ctx: &mut TxContext)
     : ValidatorEntry<C>
     {
@@ -46,7 +53,9 @@ module lisuify::validator_entry {
             id: object::new(ctx),
             stake_pool_id,
             validator_pool_id,
+            validator_address,
             is_active: true,
+            restake_cooldown,
             last_update_epoch: epoch,
             last_update_sui_balance: 0,
             stakes: object_table::new(ctx),
@@ -137,9 +146,8 @@ module lisuify::validator_entry {
             let stake_activation_epoch = *vector::borrow(&self.stake_activation_epochs, i);
             let stake = object_table::borrow(&self.stakes, stake_activation_epoch);
             total = total + stake_balance_internal(
-                stake,
                 sui_system,
-                self.validator_pool_id,
+                stake,
                 &exchange_rate
             );
             i = i + 1;
@@ -151,8 +159,12 @@ module lisuify::validator_entry {
         total
     }
 
-    public fun validator_pool_id<C>(self: &ValidatorEntry<C>): ID {
+    public(friend) fun validator_pool_id<C>(self: &ValidatorEntry<C>): ID {
         self.validator_pool_id
+    }
+
+    public(friend) fun validator_address<C>(self: &ValidatorEntry<C>): address {
+        self.validator_address
     }
 
     public(friend) fun destroy_empty<C>(self: ValidatorEntry<C>) {
@@ -160,7 +172,9 @@ module lisuify::validator_entry {
             id,
             stake_pool_id: _,
             validator_pool_id: _,
+            validator_address: _,
             is_active: _,
+            restake_cooldown: _,
             last_update_epoch: _,
             last_update_sui_balance: _,
             stakes,
@@ -185,51 +199,101 @@ module lisuify::validator_entry {
     }
     */
 
-    public(friend) fun add_stake<C>(
+    public(friend) fun unstake(
+        sui_system: &mut SuiSystemState,
+        stake: StakedSui,
+        ctx: &mut TxContext
+    ): Balance<SUI> {
+        let stake_balance = stake_balance(
+            sui_system,
+            &stake,
+            ctx,
+        );
+        let sui = sui_system::request_withdraw_stake_non_entry(
+            sui_system,
+            stake,
+            ctx
+        );
+        assert!(
+            balance::value(&sui) == stake_balance,
+            ENotEnoughRewards
+        );
+        sui
+    }
+
+    public(friend) fun is_restake_needed<C>(
+        self: &ValidatorEntry<C>,
+        epoch: u64,
+        stake_activation_epoch: u64,
+    ): bool {
+        epoch > stake_activation_epoch + self.restake_cooldown
+    }
+
+    public(friend) fun unstake_restaking<C>(
+        self: &mut ValidatorEntry<C>,
+        sui_system: &mut SuiSystemState,
+        ctx: &mut TxContext,
+    ): Balance<SUI> {
+        let epoch = tx_context::epoch(ctx);
+        let result = balance::zero();
+        let i = 0;
+        let count = vector::length(&self.stake_activation_epochs);
+        while (i < count) {
+            let stake_activation_epoch = *vector::borrow(
+                &self.stake_activation_epochs,
+                i
+            );
+            if (is_restake_needed(self, epoch, stake_activation_epoch)) {
+                let stake = object_table::remove(
+                    &mut self.stakes,
+                    stake_activation_epoch
+                );
+                let sui = unstake(
+                    sui_system,
+                    stake,
+                    ctx
+                );
+                balance::join(&mut result, sui);
+
+                vector::swap_remove(
+                    &mut self.stake_activation_epochs,
+                    i
+                );
+            } else {
+                i = i + 1;
+            }
+        };
+        
+        result
+    }
+
+    fun add_stake_internal<C>(
         self: &mut ValidatorEntry<C>,
         sui_system: &mut SuiSystemState,
         stake: StakedSui,
-        ctx: &TxContext,
+        stake_balance: u64,
+        exchange_rate: &PoolTokenExchangeRate
     ): u64 {
-        assert!(self.is_active, EDeactivated);
-        assert!(staking_pool::pool_id(&stake) == self.validator_pool_id, EWrongValidatorPool);
-
-        let epoch = tx_context::epoch(ctx);
-        let exchange_rate = option::destroy_some(
-            pool_exchange_rate_at_epoch(
-                sui_system,
-                self.validator_pool_id,
-                epoch
-            )
-        );
-
         let stake_activation_epoch = staking_pool::stake_activation_epoch(&stake);
+
         if (object_table::contains(&self.stakes, stake_activation_epoch)) {
             let target_stake = object_table::borrow_mut(
                 &mut self.stakes,
                 stake_activation_epoch
             );
             let target_balance = stake_balance_internal(
-                target_stake,
                 sui_system,
-                self.validator_pool_id,
-                &exchange_rate
+                target_stake,
+                exchange_rate
             );
             staking_pool::join_staked_sui(target_stake, stake);
             let joined_balance = stake_balance_internal(
-                target_stake,
                 sui_system,
-                self.validator_pool_id,
-                &exchange_rate
+                target_stake,
+                exchange_rate
             );
             joined_balance - target_balance
         } else {
-            let stake_balance = stake_balance_internal(
-                &stake,
-                sui_system,
-                self.validator_pool_id,
-                &exchange_rate
-            );
             object_table::add(&mut self.stakes, stake_activation_epoch, stake);
             vector::push_back(
                 &mut self.stake_activation_epochs,
@@ -239,12 +303,50 @@ module lisuify::validator_entry {
         }
     }
 
-    fun stake_balance_internal(
-        stake: &StakedSui,
+    public(friend) fun add_stake<C>(
+        self: &mut ValidatorEntry<C>,
         sui_system: &mut SuiSystemState,
-        validator_pool_id: ID,
+        stake: StakedSui,
+        ctx: &mut TxContext,
+    ): (u64, bool) { // balance, is_fresh
+        assert!(self.is_active, EDeactivated);
+        assert!(staking_pool::pool_id(&stake) == self.validator_pool_id, EWrongValidatorPool);
+        let epoch = tx_context::epoch(ctx);
+        let stake_activation_epoch = staking_pool::stake_activation_epoch(&stake);
+        assert!(
+            !is_restake_needed(self, epoch, stake_activation_epoch),
+            ERestakeRequired
+        );
+
+        let exchange_rate = option::destroy_some(
+            pool_exchange_rate_at_epoch(
+                sui_system,
+                self.validator_pool_id,
+                epoch
+            )
+        );
+        let stake_balance = stake_balance_internal(
+            sui_system,
+            &stake,
+            &exchange_rate
+        );
+
+        stake_balance = add_stake_internal(
+            self,
+            sui_system,
+            stake,
+            stake_balance,
+            &exchange_rate
+        );
+        (stake_balance, stake_activation_epoch > epoch)
+    }
+
+    fun stake_balance_internal(
+        sui_system: &mut SuiSystemState,
+        stake: &StakedSui,
         exchange_rate: &PoolTokenExchangeRate
     ): u64 {
+        let validator_pool_id = staking_pool::pool_id(stake);
         let staked_amount = staking_pool::staked_sui_amount(stake);
         let pool_token_withdraw_amount = {
             let exchange_rate_at_staking_epoch = option::destroy_some(
@@ -262,12 +364,12 @@ module lisuify::validator_entry {
     }
 
     public(friend) fun stake_balance(
-        stake: &StakedSui,
         sui_system: &mut SuiSystemState,
-        validator_pool_id: ID,
+        stake: &StakedSui,
         ctx: &TxContext,
     ): u64 {
         let epoch = tx_context::epoch(ctx);
+        let validator_pool_id = staking_pool::pool_id(stake);
         let exchange_rate = option::destroy_some(
             pool_exchange_rate_at_epoch(
                 sui_system,
@@ -277,9 +379,8 @@ module lisuify::validator_entry {
         );
         
         stake_balance_internal(
-            stake,
             sui_system,
-            validator_pool_id,
+            stake,
             &exchange_rate
         )
     }
@@ -399,9 +500,8 @@ module lisuify::validator_entry {
                 )
             };
             let stake_balance = stake_balance_internal(
-                &source_stake,
                 sui_system,
-                self.validator_pool_id,
+                &source_stake,
                 &exchange_rate,
             );
             fresh_part = fresh_part
