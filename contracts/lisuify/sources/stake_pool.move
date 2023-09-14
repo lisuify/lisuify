@@ -26,12 +26,11 @@ module lisuify::stake_pool {
     const EValidatorDoesNotExist: u64 = 2002;
     const EWrongValidatorManagerCap: u64 = 2003;
     const EAlreadyUpdated: u64 = 2004;
-    const ESlashed: u64 = 2005;
-    const EWrongValidatorAddress: u64 = 2006;
-    const ETooEarlyToStakeReserve: u64 = 2007;
-    const EWrongAdminCap: u64 = 2008;
-    const ENotEnoughSuiToWithdraw: u64 = 2009;
-    const EForcedUstakeCapped: u64 = 2010;
+    const EWrongValidatorAddress: u64 = 2005;
+    const ETooEarlyToStakeReserve: u64 = 2006;
+    const EWrongAdminCap: u64 = 2007;
+    const ENotEnoughSuiToWithdraw: u64 = 2008;
+    const EForcedUstakeCapped: u64 = 2009;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -312,14 +311,11 @@ module lisuify::stake_pool {
         self: &mut StakePool<C>
     ) {
         let update = option::extract(&mut self.update);
-        assert!(
-            update.pending_sui_balance >= self.current_sui_balance,
-            ESlashed
-        );
         let old_sui_balance = self.last_update_sui_balance;
         let old_token_supply = self.last_update_token_supply;
 
-        let rewards = update.pending_sui_balance - self.current_sui_balance;
+        let rewards = math::max(update.pending_sui_balance, self.current_sui_balance)
+            - self.current_sui_balance;
         let fee = (((rewards as u128)
             * (self.rewards_fee_bpc as u128)
             / (MAX_BPC as u128)) as u64);
@@ -474,7 +470,7 @@ module lisuify::stake_pool {
         last_update_token_supply: u64,
     }
 
-    public fun deposit_sui_internal<C>(
+    fun deposit_sui_internal<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
         clock: &Clock,
