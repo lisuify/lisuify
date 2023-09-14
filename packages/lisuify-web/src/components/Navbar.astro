@@ -40,7 +40,7 @@ const { isWallet } = Astro.props;
                 {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
                   return (
                     <li>
-                      <a>{title1}</a>
+                      <div>{title1}</div>
                       <ul class="p-2">
                         {Object.entries(val1).map(([title2, link]) => {
                           return (
@@ -67,26 +67,27 @@ const { isWallet } = Astro.props;
       if (isWallet) {
         return (
           <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1">
-              {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
-                return (
-                  <li tabindex="0">
-                    <details>
-                      <summary>{title1}</summary>
-                      <ul class="p-2">
-                        {Object.entries(val1).map(([title2, link]) => {
-                          return (
-                            <li>
-                              <a href={link}>{title2}</a>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </details>
-                  </li>
-                );
-              })}
-            </ul>
+            {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
+              return (
+                <div class="dropdown dropdown-hover">
+                  <label tabindex="0" class="btn">
+                    {title1}
+                  </label>
+                  <ul
+                    tabindex="0"
+                    class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+                  >
+                    {Object.entries(val1).map(([title2, link]) => {
+                      return (
+                        <li>
+                          <a href={link}>{title2}</a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         );
       }
