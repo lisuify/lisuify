@@ -11,7 +11,7 @@
 
 {#if $walletStateAtom.wallets.length > 0}
   <div
-    class="dropdown dropdown-bottom dropdown-end w-60 {$loadingWalletDataAtom &&
+    class="dropdown dropdown-bottom dropdown-end w-64 {$loadingWalletDataAtom &&
       'animate-pulse blur-sm pointer-events-none'}"
   >
     <button

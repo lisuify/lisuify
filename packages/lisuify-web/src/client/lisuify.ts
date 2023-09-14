@@ -5,6 +5,7 @@ import { client } from "./client";
 import { walletKit } from "../stores/walletStore";
 import type { CoinStruct } from "@mysten/sui.js/client";
 import { addToastMessage } from "../stores/toastStore";
+import { log } from "../utils";
 
 let stakePool: StakePool;
 
@@ -55,14 +56,17 @@ export const dryRunTransactionBlock = async (txb: TransactionBlock) => {
   });
 };
 
+export const getCurrentSuiBalance = async () => {
+  return stakePool.currentSuiBalance;
+};
+
 export const getLiSUIRatio = async () => {
-  // TODO fix this
-  console.log("stakePool.lastUpdateSuiBalance", stakePool.lastUpdateSuiBalance);
-  console.log(
-    "stakePool.lastUpdateTokenSupply",
-    stakePool.lastUpdateTokenSupply
-  );
-  return BigInt(101);
+  log("stakePool.lastUpdateSuiBalance", stakePool.lastUpdateSuiBalance);
+  log("stakePool.lastUpdateTokenSupply", stakePool.lastUpdateTokenSupply);
+  if (stakePool.lastUpdateTokenSupply <= 0) {
+    return BigInt(0);
+  }
+  return stakePool.lastUpdateSuiBalance / stakePool.lastUpdateTokenSupply;
 };
 
 export const callWallet = async (txb: TransactionBlock) => {

@@ -37,6 +37,7 @@ export interface WalletState {
 }
 
 export interface Stats {
+  totalSuiStaking: bigint;
   liSuiRatio: bigint;
 }
 
