@@ -48,3 +48,7 @@ export const getStakedSUIObjects = (address: string) => {
 export const getLatestSuiSystemState = () => {
   return client.getLatestSuiSystemState();
 };
+
+export const getValidatorAPY = () => {
+  return client.getValidatorsApy();
+};

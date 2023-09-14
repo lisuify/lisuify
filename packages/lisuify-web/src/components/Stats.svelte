@@ -1,6 +1,7 @@
 <script lang="ts">
   import { statsAtom } from "../stores/statsStore";
   import { round, suiToNumber, suiToString } from "../utils";
+  import Info from "./icons/Info.svelte";
 </script>
 
 <div
@@ -27,8 +28,13 @@
   </div>
 
   <div class="stat">
-    <div class="stat-title text-sm">APY</div>
-    <div class="stat-value text-xl">5.5%</div>
-    <div class="stat-desc">↗︎ 0.01 (1%)</div>
+    <div class="stat-title text-sm flex gap-1 items-center">
+      <div>APY</div>
+      <div class="h-1/2 tooltip tooltip-left" data-tip="Mean validators APY">
+        <Info />
+      </div>
+    </div>
+    <div class="stat-value text-xl">{round($statsAtom.validatorApy, 2)}%</div>
+    <div class="stat-desc">&nbsp;</div>
   </div>
 </div>

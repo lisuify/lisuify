@@ -332,7 +332,7 @@
 
   <div class="flex justify-between w-full">
     <div>APY</div>
-    <div>5.5 %</div>
+    <div>{round($statsAtom.validatorApy, 2)} %</div>
   </div>
 </div>
 

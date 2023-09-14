@@ -39,6 +39,7 @@ export interface WalletState {
 export interface Stats {
   totalSuiStaking: bigint;
   liSuiRatio: number;
+  validatorApy: number;
 }
 
 export interface SuiSystemStateSummaryData extends SuiSystemStateSummary {}
