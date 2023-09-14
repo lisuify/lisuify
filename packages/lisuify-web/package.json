@@ -21,6 +21,7 @@
     "@nanostores/persistent": "^0.9.1",
     "@tailwindcss/typography": "^0.5.9",
     "astro": "^3.0.3",
+    "astro-icon": "^0.8.1",
     "astro-robots-txt": "^1.0.0",
     "astrojs-service-worker": "^1.1.0",
     "autoprefixer": "^10.4.14",

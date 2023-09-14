@@ -1,6 +1,12 @@
 ---
 import ConnectWalletDropdown from "./ConnectWalletDropdown.svelte";
 import SunMoon from "./SunMoon.astro";
+
+interface Props {
+  isWallet: boolean;
+}
+
+const { isWallet } = Astro.props;
 ---
 
 <div class="navbar w-full flex-col md:flex-row">
@@ -9,6 +15,12 @@ import SunMoon from "./SunMoon.astro";
     <div class="text-xl font-bold">LiSuify</div>
   </div>
   <div class="navbar-end justify-center md:justify-end">
-    <ConnectWalletDropdown client:only />
+    {
+      () => {
+        if (isWallet) {
+          return <ConnectWalletDropdown client:only />;
+        }
+      }
+    }
   </div>
 </div>
