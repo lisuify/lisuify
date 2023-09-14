@@ -1,5 +1,10 @@
 /* eslint-disable node/no-unsupported-features/es-builtins */
-import {CoinStruct, MoveValue, SuiClient} from '@mysten/sui.js/client';
+import {
+  CoinStruct,
+  MoveValue,
+  SuiClient,
+  SuiSystemStateSummary,
+} from '@mysten/sui.js/client';
 import {TransactionBlock} from '@mysten/sui.js/transactions';
 import {
   addValidator,
@@ -146,18 +151,69 @@ export class StakePool {
 
   addValidator({
     validatorPool,
+    address,
+    suiSystem,
     txb,
   }: {
-    validatorPool: string;
+    validatorPool?: string;
+    address?: string;
+    suiSystem?: SuiSystemStateSummary;
     txb: TransactionBlock;
   }) {
-    addValidator({
-      lisuifyId: this.lisuifyId,
-      poolId: this.id,
-      validatorPool,
-      cap: this.validatorManagerCapId,
-      txb,
-    });
+    const validators = [];
+    if (!validatorPool || !address) {
+      if (!suiSystem) {
+        throw new Error('SuiSystem is required');
+      }
+      if (validatorPool) {
+        const v = suiSystem.activeValidators.find(
+          ({stakingPoolId}) => stakingPoolId === validatorPool
+        );
+        if (!v) {
+          throw new Error(`Can not find validaror by pool id ${validatorPool}`);
+        }
+        validators.push({
+          validatorPool: v.stakingPoolId,
+          address: v.suiAddress,
+        });
+      }
+      if (address) {
+        const v = suiSystem.activeValidators.find(
+          ({suiAddress}) => suiAddress === address
+        );
+        if (!v) {
+          throw new Error(`Can not find validaror by address ${address}`);
+        }
+        validators.push({
+          validatorPool: v.stakingPoolId,
+          address: v.suiAddress,
+        });
+      }
+      if (validators.length === 0) {
+        validators.push(
+          ...suiSystem.activeValidators.map(({stakingPoolId, suiAddress}) => ({
+            validatorPool: stakingPoolId,
+            address: suiAddress,
+          }))
+        );
+      }
+    } else {
+      validators.push({
+        validatorPool,
+        address,
+      });
+    }
+
+    for (const {validatorPool, address} of validators) {
+      addValidator({
+        lisuifyId: this.lisuifyId,
+        poolId: this.id,
+        validatorPool,
+        address,
+        cap: this.validatorManagerCapId,
+        txb,
+      });
+    }
   }
 
   depositStake({stake, txb}: {stake: string; txb: TransactionBlock}) {

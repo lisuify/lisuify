@@ -1,15 +1,18 @@
+import {SUI_SYSTEM_STATE_OBJECT_ID} from '@mysten/sui.js/utils';
 import {TransactionBlock} from '@mysten/sui.js/transactions';
 
 export const addValidator = ({
   lisuifyId,
   poolId,
   validatorPool,
+  address,
   cap,
   txb,
 }: {
   lisuifyId: string;
   poolId: string;
   validatorPool: string;
+  address: string;
   cap: string;
   txb: TransactionBlock;
 }) => {
@@ -19,8 +22,12 @@ export const addValidator = ({
     arguments: [
       // self
       txb.object(poolId),
+      // sui_system
+      txb.object(SUI_SYSTEM_STATE_OBJECT_ID),
       // validator_pool
-      txb.object(validatorPool),
+      txb.pure(validatorPool),
+      // validator_address
+      txb.pure(address),
       // cap
       txb.object(cap),
     ],

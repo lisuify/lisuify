@@ -31,6 +31,7 @@ module lisuify::stake_pool {
     const ETooEarlyToStakeReserve: u64 = 2007;
     const EWrongAdminCap: u64 = 2008;
     const ENotEnoughSuiToWithdraw: u64 = 2009;
+    const EForcedUstakeCapped: u64 = 2010;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -51,10 +52,12 @@ module lisuify::stake_pool {
         withdraw_fee_bpc: u32,
         rewards_fee_bpc: u32,
         keeping_reserve_ms: u64,
+        max_forced_unstake_bpc: u32,
         last_update_epoch: u64,
         last_update_sui_balance: u64,
         last_update_token_supply: u64,
         current_sui_balance: u64,
+        current_forced_ustake: u64,
         update: Option<StakePoolUpdate>,
         staking_validator: Option<address>,
         validators: vector<ValidatorEntry<C>>,
@@ -92,10 +95,12 @@ module lisuify::stake_pool {
             withdraw_fee_bpc: 100,
             rewards_fee_bpc: 50000,
             keeping_reserve_ms: ONE_DAY_MS - 10 * ONE_MINUTE_MS,
+            max_forced_unstake_bpc: 100000,
             last_update_epoch: tx_context::epoch(ctx),
             last_update_sui_balance: 0,
             last_update_token_supply: 0,
             current_sui_balance: 0,
+            current_forced_ustake: 0,
             update: option::none(),
             staking_validator: option::none(),
             validators: vector::empty(),
@@ -139,8 +144,8 @@ module lisuify::stake_pool {
     }
 
     public entry fun add_validator<C>(
-        sui_system: &mut SuiSystemState,
         self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
         validator_pool_id: ID,
         validator_address: address,
         cap: &ValidatorManagerCap<C>,
@@ -326,6 +331,7 @@ module lisuify::stake_pool {
         self.last_update_sui_balance = update.pending_sui_balance;
         self.last_update_token_supply = coin::total_supply(&self.treasury);
         self.current_sui_balance = update.pending_sui_balance;
+        self.current_forced_ustake = 0;
 
         event::emit(UpdateFinalized {
             stake_pool_id: object::id(self),
@@ -639,6 +645,7 @@ module lisuify::stake_pool {
         token_balance: Balance<C>,
         ctx: &mut TxContext,
     ): (Balance<SUI>, vector<StakedSui>, Balance<C>) {
+        assert!(is_updated(self, ctx), EOutdated);
         let token_amount = balance::value(&token_balance);
         let withdraw_fee = ((((token_amount as u128)
             * (self.withdraw_fee_bpc as u128) + ((MAX_BPC - 1) as u128))
@@ -759,6 +766,7 @@ module lisuify::stake_pool {
         token_balance: Balance<C>,
         ctx: &mut TxContext,
     ): Balance<SUI> {
+        assert!(is_updated(self, ctx), EOutdated);
         let token_amount = balance::value(&token_balance);
         let withdraw_fee = ((((token_amount as u128)
             * (self.withdraw_fee_bpc as u128) + ((MAX_BPC - 1) as u128))
@@ -877,6 +885,7 @@ module lisuify::stake_pool {
         cap: &ValidatorManagerCap<C>,
         ctx: &mut TxContext,
     ) {
+        assert!(is_updated(self, ctx), EOutdated);
         assert!(
             object::id(cap) == self.validator_manager_cap_id,
             EWrongValidatorManagerCap
@@ -898,6 +907,7 @@ module lisuify::stake_pool {
         validator_address: address,
         ctx: &mut TxContext,
     ) {
+        assert!(is_updated(self, ctx), EOutdated);
         assert!(
             is_staking_reserve_time(self, clock, ctx),
             ETooEarlyToStakeReserve
@@ -916,6 +926,44 @@ module lisuify::stake_pool {
             reserve_balance,
             ctx
         )
+    }
+
+    public entry fun forced_unstake<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        validator_pool_id: ID,
+        amount: u64,
+        cap: &ValidatorManagerCap<C>,
+        ctx: &mut TxContext,
+    ) {
+        assert!(
+            object::id(cap) == self.validator_manager_cap_id,
+            EWrongValidatorManagerCap
+        );
+        assert!(is_updated(self, ctx), EOutdated);
+        let max_forced_unstake = (((self.current_sui_balance as u128) 
+            * (self.max_forced_unstake_bpc as u128)
+            / (MAX_BPC as u128)) as u64);
+        assert!(
+            self.current_forced_ustake + amount < max_forced_unstake,
+            EForcedUstakeCapped
+        );
+
+        self.current_forced_ustake = self.current_forced_ustake + amount;
+
+        let validator_index = validator_index(self, validator_pool_id);
+        assert!(option::is_some(&validator_index), EValidatorDoesNotExist);
+        let validator = vector::borrow_mut(
+            &mut self.validators,
+            option::destroy_some(validator_index)
+        );
+        let sui = validator_entry::withdraw(
+            validator,
+            sui_system,
+            amount,
+            ctx
+        );
+        balance::join(&mut self.reserve, sui);
     }
 
     public fun get_sui_amount<C>(self: &StakePool<C>, token_amount: u64): u64 {
@@ -1105,6 +1153,28 @@ module lisuify::stake_pool {
         event::emit(KeepingReserveMsSet {
             stake_pool_id: object::id(self),
             keeping_reserve_ms,
+        })
+    }
+
+    public fun max_forced_unstake_bpc<C>(self: &StakePool<C>): u32 {
+        self.max_forced_unstake_bpc
+    }
+
+    struct MaxForcedUnstakeBpcSet has copy, drop {
+        stake_pool_id: ID,
+        max_forced_unstake_bpc: u32,
+    }
+
+    public entry fun set_max_forced_unstake_bpc<C>(
+        self: &mut StakePool<C>,
+        max_forced_unstake_bpc: u32,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.max_forced_unstake_bpc = max_forced_unstake_bpc;
+        event::emit(MaxForcedUnstakeBpcSet {
+            stake_pool_id: object::id(self),
+            max_forced_unstake_bpc,
         })
     }
 }

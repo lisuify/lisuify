@@ -2,7 +2,7 @@
 
 [move]
 version = 0
-manifest_digest = "003B6265C48EC7DF90B4794A656EE185A6F65FBCFC7EEAF3B8A916CB28EC704C"
+manifest_digest = "2DB03792EC1C4426C04F0C3BBB227D6D3F52DEA78CF400CD0AF2F2AF8C228250"
 deps_digest = "02F705743EACD2B87593E02505A1698EEE4D7068B55450C2B0FC411625D1499F"
 
 dependencies = [
@@ -12,11 +12,11 @@ dependencies = [
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/testnet", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/devnet", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/testnet", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/devnet", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },
@@ -24,7 +24,7 @@ dependencies = [
 
 [[move.package]]
 name = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/testnet", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/devnet", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { name = "MoveStdlib" },
