@@ -8,8 +8,6 @@ import {
 } from '../transactionBuilder';
 import {ValidatorEntry} from './ValidatorEntry';
 import {StakePoolUpdate} from './StakePoolUpdate';
-import {updateValidator} from '../transactionBuilder/updateValidator';
-import {finalizeUpdate} from '../transactionBuilder/finalizeUpdate';
 import {depositSui} from '../transactionBuilder/depositSui';
 import {withdraw} from '../transactionBuilder/withdraw';
 import {update} from '../transactionBuilder/update';
@@ -134,7 +132,7 @@ export class StakePool {
       BigInt(data.last_update_epoch as string),
       BigInt(data.last_update_sui_balance as string),
       BigInt(data.last_update_token_supply as string),
-      BigInt(data.curret_sui_balance as string),
+      BigInt(data.current_sui_balance as string),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (data.update as any) && StakePoolUpdate.read((data.update as any).fields),
       data.staking_validator as string | null,
@@ -226,35 +224,6 @@ export class StakePool {
       txb,
     });
   }
-
-  /*
-  async update({provider, txb}: {provider: SuiClient; txb: TransactionBlock}) {
-    const {epoch} = await provider.getLatestSuiSystemState();
-    const epochNumber = BigInt(epoch);
-    if (epochNumber <= this.lastUpdateEpoch) {
-      throw new Error('Too early to update');
-    }
-    let i = 0;
-    if (
-      this.currentUpdate &&
-      this.currentUpdate.updatingEpoch === epochNumber
-    ) {
-      i = Number(this.currentUpdate.updatedValidators);
-    }
-    for (; i < this.validators.length; i++) {
-      updateValidator({
-        lisuifyId: this.lisuifyId,
-        poolId: this.id,
-        validatorPoolId: this.validators[i].validatorPoolId,
-        txb,
-      });
-    }
-    finalizeUpdate({
-      lisuifyId: this.lisuifyId,
-      poolId: this.id,
-      txb,
-    });
-  }*/
 
   async update({txb}: {txb: TransactionBlock}) {
     update({lisuifyId: this.lisuifyId, poolId: this.id, txb});
