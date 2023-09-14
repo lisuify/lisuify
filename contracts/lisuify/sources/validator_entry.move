@@ -109,10 +109,8 @@ module lisuify::validator_entry {
     public(friend) fun update<C>(
         self: &mut ValidatorEntry<C>,
         sui_system: &mut SuiSystemState,
-        validator_pool_id: ID,
         ctx: &TxContext,
     ): u64 {
-        assert!(validator_pool_id == self.validator_pool_id, EWrongValidatorPool);
         let epoch = tx_context::epoch(ctx);
         if (epoch == self.last_update_epoch) {
             return self.last_update_sui_balance
@@ -121,7 +119,7 @@ module lisuify::validator_entry {
         
         let exchange_rate = pool_exchange_rate_at_epoch(
             sui_system,
-            validator_pool_id,
+            self.validator_pool_id,
             epoch
         );
 
@@ -141,7 +139,7 @@ module lisuify::validator_entry {
             total = total + stake_balance_internal(
                 stake,
                 sui_system,
-                validator_pool_id,
+                self.validator_pool_id,
                 &exchange_rate
             );
             i = i + 1;

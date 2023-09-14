@@ -12,6 +12,7 @@ import {updateValidator} from '../transactionBuilder/updateValidator';
 import {finalizeUpdate} from '../transactionBuilder/finalizeUpdate';
 import {depositSui} from '../transactionBuilder/depositSui';
 import {withdraw} from '../transactionBuilder/withdraw';
+import {update} from '../transactionBuilder/update';
 
 export class StakePool {
   private constructor(
@@ -226,6 +227,7 @@ export class StakePool {
     });
   }
 
+  /*
   async update({provider, txb}: {provider: SuiClient; txb: TransactionBlock}) {
     const {epoch} = await provider.getLatestSuiSystemState();
     const epochNumber = BigInt(epoch);
@@ -252,5 +254,9 @@ export class StakePool {
       poolId: this.id,
       txb,
     });
+  }*/
+
+  async update({txb}: {txb: TransactionBlock}) {
+    update({lisuifyId: this.lisuifyId, poolId: this.id, txb});
   }
 }
