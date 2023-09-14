@@ -2,14 +2,23 @@
   import SuiLogo from "./icons/SuiLogo.svelte";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
   import { blockExplorerLink, log, suiToString } from "../utils";
-  import { callWallet, depositSUI, depositStakedSUI } from "../client/lisuify";
+  import {
+    callWallet,
+    depositSUI,
+    depositStakedSUI,
+    dryRunTransactionBlock,
+    liSuiCoinType,
+  } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
   import { suiDecimal } from "../consts";
+  import { statsAtom } from "../stores/statsStore";
 
   let selectingIndex = -1;
   let suiAmountBigint = BigInt(0);
   let suiAmount = "";
   let suiAmountError = "";
+  let liSuiBalanceChange = BigInt(0);
+  let liSuiRatio = BigInt($statsAtom.liSuiRatio);
 
   const handlAmount = (target: string) => {
     suiAmountError = "";
@@ -80,6 +89,19 @@
 
     // stake SUI coins
     const txb = await depositSUI(suiAmountBigint);
+
+    dryRunTransactionBlock(txb)
+      .then((resp) => {
+        log("dryRunTransactionBlock", resp);
+        resp.balanceChanges.forEach((balance) => {
+          if (balance.coinType === liSuiCoinType) {
+            liSuiBalanceChange = BigInt(balance.amount);
+          }
+        });
+      })
+      .catch((e: Error) => {
+        addToastMessage(`Error to simulate stake SUI: ${e.message}`, "error");
+      });
 
     callWallet(txb)
       .then((object) => {
@@ -255,19 +277,21 @@
   {/if}
 {/if}
 
-<div class="flex justify-between w-full">
-  <div>You will receive</div>
-  <div>0 liSUI</div>
-</div>
+<div class="flex flex-col gap-2 w-full">
+  <div class="flex justify-between w-full">
+    <div>You will receive</div>
+    <div>{suiToString(liSuiBalanceChange)} liSUI</div>
+  </div>
 
-<div class="flex justify-between w-full">
-  <div>Exchange rate</div>
-  <div>1 liSUI = 1.01 SUI</div>
-</div>
+  <div class="flex justify-between w-full">
+    <div>Exchange rate</div>
+    <div>1 liSUI = {suiToString(liSuiRatio)} SUI</div>
+  </div>
 
-<div class="flex justify-between w-full">
-  <div>APY</div>
-  <div>5.5 %</div>
+  <div class="flex justify-between w-full">
+    <div>APY</div>
+    <div>5.5 %</div>
+  </div>
 </div>
 
 <button

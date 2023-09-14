@@ -35,7 +35,7 @@
             $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiBalance
           )}
         </div>
-        <div>liSUI</div>
+        <div class="text-left">liSUI</div>
       </div>
     </button>
     <div
@@ -60,7 +60,7 @@
               <div>
                 {suiToString(wallet.liSuiBalance)}
               </div>
-              <div>liSUI</div>
+              <div class="text-left">liSUI</div>
             </div>
           </button>
         {/if}

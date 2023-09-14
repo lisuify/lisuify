@@ -104,14 +104,16 @@
   </div>
 {/if}
 
-<div class="flex justify-between w-full">
-  <div>You will receive</div>
-  <div>0 SUI</div>
-</div>
+<div class="flex flex-col gap-2 w-full">
+  <div class="flex justify-between w-full">
+    <div>You will receive</div>
+    <div>0 SUI</div>
+  </div>
 
-<div class="flex justify-between w-full">
-  <div>Exchange rate</div>
-  <div>1 liSUI = 1.01 SUI</div>
+  <div class="flex justify-between w-full">
+    <div>Exchange rate</div>
+    <div>1 liSUI = 1.01 SUI</div>
+  </div>
 </div>
 
 <button
