@@ -1,4 +1,5 @@
 ---
+import { NAVIGATION_MENU } from "../consts";
 import ConnectWalletDropdown from "./ConnectWalletDropdown.svelte";
 import SunMoon from "./SunMoon.astro";
 
@@ -36,34 +37,22 @@ const { isWallet } = Astro.props;
                 tabindex="0"
                 class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
               >
-                <li>
-                  <a>Home</a>
-                </li>
-                <li>
-                  <a>Getting Started</a>
-                  <ul class="p-2">
+                {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
+                  return (
                     <li>
-                      <a>What is LiSuify</a>
+                      <a>{title1}</a>
+                      <ul class="p-2">
+                        {Object.entries(val1).map(([title2, link]) => {
+                          return (
+                            <li>
+                              <a href={link}>{title2}</a>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     </li>
-                    <li>
-                      <a>What is liSUI</a>
-                    </li>
-                    <li>
-                      <a>FAQ</a>
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <a>Documents</a>
-                  <ul class="p-2">
-                    <li>
-                      <a>Introduction</a>
-                    </li>
-                    <li>
-                      <a>Liquid Staking</a>
-                    </li>
-                  </ul>
-                </li>
+                  );
+                })}
               </ul>
             </div>
           );
@@ -79,35 +68,24 @@ const { isWallet } = Astro.props;
         return (
           <div class="navbar-center hidden md:flex">
             <ul class="menu menu-horizontal px-1">
-              <li tabindex="0">
-                <details>
-                  <summary>Getting Started</summary>
-                  <ul class="p-2">
-                    <li>
-                      <a>What is LiSuify</a>
-                    </li>
-                    <li>
-                      <a>What is liSUI</a>
-                    </li>
-                    <li>
-                      <a>FAQ</a>
-                    </li>
-                  </ul>
-                </details>
-              </li>
-              <li tabindex="0">
-                <details>
-                  <summary>Documents</summary>
-                  <ul class="p-2">
-                    <li>
-                      <a>Introduction</a>
-                    </li>
-                    <li>
-                      <a>Liquid Staking</a>
-                    </li>
-                  </ul>
-                </details>
-              </li>
+              {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
+                return (
+                  <li tabindex="0">
+                    <details>
+                      <summary>{title1}</summary>
+                      <ul class="p-2">
+                        {Object.entries(val1).map(([title2, link]) => {
+                          return (
+                            <li>
+                              <a href={link}>{title2}</a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </details>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
@@ -120,7 +98,11 @@ const { isWallet } = Astro.props;
         if (isWallet) {
           return <ConnectWalletDropdown client:only />;
         }
-        return <button class="btn btn-primary">Go to App</button>;
+        return (
+          <a class="btn btn-primary" href="/">
+            Go to App
+          </a>
+        );
       }
     }
   </div>

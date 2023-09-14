@@ -3,7 +3,7 @@ import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon";
 import { getCollection } from "astro:content";
 import MainLayout from "./main.astro";
-import { MENU } from "../consts";
+import { SIDE_MENU } from "../consts";
 
 interface Props {
   title: string;
@@ -34,11 +34,11 @@ const { title, headings } = Astro.props;
         </button>
         <div class="md:float-right w-full max-md:py-4 px-8 md:px-4">
           {
-            Object.keys(MENU).map((section) => {
+            Object.keys(SIDE_MENU).map((section) => {
               return (
                 <>
                   <h2 class="text-lg font-bold mt-8 py-2 px-4">{section}</h2>
-                  {MENU[section as keyof typeof MENU].map((path) => (
+                  {SIDE_MENU[section as keyof typeof SIDE_MENU].map((path) => (
                     <a
                       href={path}
                       class={`relative block py-2 px-4 transition-colors
