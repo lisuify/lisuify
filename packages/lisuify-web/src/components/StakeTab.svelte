@@ -1,7 +1,7 @@
 <script lang="ts">
   import SuiLogo from "./icons/SuiLogo.svelte";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
-  import { blockExplorerLink, log, suiToString } from "../utils";
+  import { blockExplorerLink, log, round, suiToString } from "../utils";
   import {
     callWallet,
     depositSUI,
@@ -10,17 +10,21 @@
     liSuiCoinType,
   } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
-  import { suiDecimal } from "../consts";
   import { statsAtom } from "../stores/statsStore";
+  import type { TransactionBlock } from "@mysten/sui.js/transactions";
+  import { SUI_DECIMALS } from "@mysten/sui.js/utils";
 
   let selectingIndex = -1;
   let suiAmountBigint = BigInt(0);
   let suiAmount = "";
   let suiAmountError = "";
+  let stakedSuiAmountBigint = BigInt(0);
   let liSuiBalanceChange = BigInt(0);
-  let liSuiRatio = BigInt($statsAtom.liSuiRatio);
+  let liSuiRatio = $statsAtom.liSuiRatio;
+  let txb: TransactionBlock;
+  let loadingSimulateTx = false;
 
-  const handlAmount = (target: string) => {
+  const handlAmount = async (target: string) => {
     suiAmountError = "";
     suiAmount = target;
     if (Number(suiAmount) < 0.1) {
@@ -35,25 +39,75 @@
       suiAmountError = "SUI amount is invalid";
       return;
     }
-    suiAmountBigint = BigInt(Number(suiAmount) * 10 ** suiDecimal);
+    suiAmountBigint = BigInt(Number(suiAmount) * 10 ** SUI_DECIMALS);
+
+    // simulate stake SUI coins
+    txb = await depositSUI(suiAmountBigint);
+    txb.setSender(
+      $walletStateAtom.wallets[$walletStateAtom.walletIdx].walletAccount.address
+    );
+    loadingSimulateTx = true;
+    dryRunTransactionBlock(txb)
+      .then((resp) => {
+        log("dryRunTransactionBlock", resp);
+        resp.balanceChanges.forEach((balance) => {
+          if (balance.coinType === liSuiCoinType) {
+            liSuiBalanceChange = BigInt(balance.amount);
+            liSuiRatio = Number(suiAmountBigint) / Number(liSuiBalanceChange);
+          }
+        });
+        loadingSimulateTx = false;
+      })
+      .catch((e: Error) => {
+        addToastMessage(`Error to simulate stake SUI: ${e.message}`, "error");
+        loadingSimulateTx = false;
+      });
   };
 
-  const handleStake = async () => {
-    // Stake Staked SUI Object
+  const handleDropdown = async (index: number) => {
+    selectingIndex = index;
+    // simulate stake StakedSUI
     if (selectingIndex >= 0) {
       const stakedSuiObjects =
         $walletStateAtom.wallets[$walletStateAtom.walletIdx].stakedSuiObjects[
           selectingIndex
         ];
-
-      const suiString = suiToString(
-        BigInt(stakedSuiObjects.content?.fields?.principal) || 0
-      );
-
-      const txb = await depositStakedSUI({
+      stakedSuiAmountBigint =
+        BigInt(stakedSuiObjects.content?.fields?.principal) || BigInt(0);
+      txb = await depositStakedSUI({
         objectId: stakedSuiObjects.objectId,
       });
+      txb.setSender(
+        $walletStateAtom.wallets[$walletStateAtom.walletIdx].walletAccount
+          .address
+      );
+      loadingSimulateTx = true;
+      dryRunTransactionBlock(txb)
+        .then((resp) => {
+          log("dryRunTransactionBlock", resp);
+          resp.balanceChanges.forEach((balance) => {
+            if (balance.coinType === liSuiCoinType) {
+              liSuiBalanceChange = BigInt(balance.amount);
+              liSuiRatio =
+                Number(stakedSuiAmountBigint) / Number(liSuiBalanceChange);
+            }
+          });
+          loadingSimulateTx = false;
+        })
+        .catch((e: Error) => {
+          addToastMessage(
+            `Error to simulate stake ${suiToString(
+              stakedSuiAmountBigint
+            )} SUI: ${e.message}`,
+            "error"
+          );
+          loadingSimulateTx = false;
+        });
+    }
+  };
 
+  const handleStake = async () => {
+    if (selectingIndex >= 0) {
       callWallet(txb)
         .then((object) => {
           if (object.errors) {
@@ -67,7 +121,7 @@
           }
           log("depositStake success:", object);
           addToastMessage(
-            `Successfully staked ${suiString} SUI!`,
+            `Successfully staked ${suiToString(stakedSuiAmountBigint)} SUI!`,
             "success",
             blockExplorerLink(object.digest)
           );
@@ -79,29 +133,14 @@
           }
           console.error("depositStakedSUI error:", e);
           addToastMessage(
-            `Error to stake ${suiString} SUI: ${e.message}`,
+            `Error to stake ${suiToString(stakedSuiAmountBigint)} SUI: ${
+              e.message
+            }`,
             "error"
           );
         });
-
       return;
     }
-
-    // stake SUI coins
-    const txb = await depositSUI(suiAmountBigint);
-
-    dryRunTransactionBlock(txb)
-      .then((resp) => {
-        log("dryRunTransactionBlock", resp);
-        resp.balanceChanges.forEach((balance) => {
-          if (balance.coinType === liSuiCoinType) {
-            liSuiBalanceChange = BigInt(balance.amount);
-          }
-        });
-      })
-      .catch((e: Error) => {
-        addToastMessage(`Error to simulate stake SUI: ${e.message}`, "error");
-      });
 
     callWallet(txb)
       .then((object) => {
@@ -139,7 +178,7 @@
 <div class="dropdown dropdown-bottom dropdown-end w-full">
   {#if selectingIndex < 0}
     <button class="btn btn-outline w-full bg-base-100 flex">
-      <div class="flex-grow text-xs md:text-sm">SUI Coins</div>
+      <div class="flex-grow text-xs lg:text-sm">SUI Coins</div>
       <div class="flex flex-col items-end text-xs font-thin">
         <div>balance</div>
         <div>
@@ -152,7 +191,7 @@
     </button>
   {:else}
     <button class="btn btn-outline w-full bg-base-100 flex">
-      <div class="flex-grow text-xs md:text-sm">
+      <div class="flex-grow text-xs lg:text-sm">
         Staked SUI: {$walletStateAtom.wallets[$walletStateAtom.walletIdx]
           .stakedSuiObjects[selectingIndex]?.validator?.name}
       </div>
@@ -189,10 +228,10 @@
       <button
         class="btn btn-outline w-full bg-base-100 flex"
         on:click={() => {
-          selectingIndex = -1;
+          handleDropdown(-1);
         }}
       >
-        <div class="flex-grow text-xs md:text-sm">SUI Coins</div>
+        <div class="flex-grow text-xs lg:text-sm">SUI Coins</div>
         <div class="flex flex-col items-end text-xs font-thin">
           <div>balance</div>
           <div>
@@ -209,10 +248,10 @@
         <button
           class="btn btn-outline w-full bg-base-100 flex"
           on:click={() => {
-            selectingIndex = index;
+            handleDropdown(index);
           }}
         >
-          <div class="flex-grow text-xs md:text-sm">
+          <div class="flex-grow text-xs lg:text-sm">
             Staked SUI: {stakedSUI?.validator?.name}
           </div>
           <div class="flex flex-col items-end text-xs font-thin">
@@ -277,7 +316,10 @@
   {/if}
 {/if}
 
-<div class="flex flex-col gap-2 w-full">
+<div
+  class="flex flex-col gap-2 w-full {loadingSimulateTx &&
+    'animate-pulse blur-sm'}"
+>
   <div class="flex justify-between w-full">
     <div>You will receive</div>
     <div>{suiToString(liSuiBalanceChange)} liSUI</div>
@@ -285,7 +327,7 @@
 
   <div class="flex justify-between w-full">
     <div>Exchange rate</div>
-    <div>1 liSUI = {suiToString(liSuiRatio)} SUI</div>
+    <div>1 liSUI = {round(liSuiRatio)} SUI</div>
   </div>
 
   <div class="flex justify-between w-full">
@@ -297,7 +339,8 @@
 <button
   class="btn btn-primary w-full"
   on:click={handleStake}
-  disabled={selectingIndex < 0 && (suiAmount === "" || !!suiAmountError)}
+  disabled={!txb ||
+    (selectingIndex < 0 && (suiAmount === "" || !!suiAmountError))}
 >
   STAKE
 </button>

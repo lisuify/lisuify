@@ -53,8 +53,11 @@ export const withdrawSUI = async (liSuiCoins: CoinStruct[], amount: bigint) => {
 };
 
 export const dryRunTransactionBlock = async (txb: TransactionBlock) => {
+  const txbArray = await txb.build({
+    client: client,
+  });
   return client.dryRunTransactionBlock({
-    transactionBlock: txb.serialize(),
+    transactionBlock: txbArray,
   });
 };
 
@@ -68,8 +71,9 @@ export const getLiSUIRatio = async () => {
   if (stakePool.lastUpdateTokenSupply <= 0) {
     return 1; // use 1 to prevent zero division
   }
-  return Number(
-    stakePool.lastUpdateSuiBalance / stakePool.lastUpdateTokenSupply
+  return (
+    Number(stakePool.lastUpdateSuiBalance) /
+    Number(stakePool.lastUpdateTokenSupply)
   );
 };
 

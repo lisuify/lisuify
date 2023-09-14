@@ -2,6 +2,8 @@ import type { CoinStruct } from "@mysten/sui.js/client";
 import { originalLisuifyId } from "../consts";
 import { client } from "./client";
 
+const suiStakingPoolType = "0x3::staking_pool::StakedSui";
+
 export const getSuiBalance = (address: string) => {
   return client.getBalance({
     owner: address,
@@ -35,7 +37,7 @@ export const getStakedSUIObjects = (address: string) => {
   return client.getOwnedObjects({
     owner: address,
     filter: {
-      StructType: "0x3::staking_pool::StakedSui",
+      StructType: suiStakingPoolType,
     },
     options: {
       showContent: true,

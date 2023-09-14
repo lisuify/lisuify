@@ -10,14 +10,14 @@ interface Props {
 const { isWallet } = Astro.props;
 ---
 
-<div class="navbar flex-col md:flex-row z-50">
-  <div class="navbar-start flex items-center md:justify-start">
+<div class="navbar flex-row z-50">
+  <div class="navbar-start flex items-center lg:justify-start">
     {
       () => {
         if (isWallet) {
           return (
             <div class="dropdown">
-              <label tabindex="0" class="btn btn-ghost md:hidden">
+              <label tabindex="0" class="btn btn-ghost lg:hidden">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
@@ -66,7 +66,7 @@ const { isWallet } = Astro.props;
     () => {
       if (isWallet) {
         return (
-          <div class="navbar-center hidden md:flex">
+          <div class="navbar-center hidden lg:flex">
             <ul class="menu menu-horizontal px-1">
               {Object.entries(NAVIGATION_MENU).map(([title1, val1]) => {
                 return (
@@ -92,7 +92,7 @@ const { isWallet } = Astro.props;
       }
     }
   }
-  <div class="navbar-end justify-center md:justify-end w-screen md:w-1/2">
+  <div class="navbar-end justify-end w-screen lg:w-1/2">
     {
       () => {
         if (isWallet) {

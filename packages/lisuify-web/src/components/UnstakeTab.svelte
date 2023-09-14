@@ -1,16 +1,26 @@
 <script lang="ts">
   import LiSuiLogo from "./icons/LiSuiLogo.svelte";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
-  import { blockExplorerLink, log, suiToString } from "../utils";
-  import { callWallet, withdrawSUI } from "../client/lisuify";
+  import { blockExplorerLink, log, round, suiToString } from "../utils";
+  import {
+    callWallet,
+    dryRunTransactionBlock,
+    withdrawSUI,
+  } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
-  import { suiDecimal } from "../consts";
+  import type { TransactionBlock } from "@mysten/sui.js/transactions";
+  import { statsAtom } from "../stores/statsStore";
+  import { SUI_DECIMALS, SUI_TYPE_ARG } from "@mysten/sui.js/utils";
 
   let liSuiAmountBigint = BigInt(0);
   let liSuiAmount = "";
   let liSuiAmountError = "";
+  let suiBalanceChange = BigInt(0);
+  let liSuiRatio = $statsAtom.liSuiRatio;
+  let txb: TransactionBlock;
+  let loadingSimulateTx = false;
 
-  const handlAmount = (target: string) => {
+  const handlAmount = async (target: string) => {
     liSuiAmountError = "";
     liSuiAmount = target;
     if (
@@ -22,16 +32,35 @@
       liSuiAmountError = "liSUI amount is invalid";
       return;
     }
-    liSuiAmountBigint = BigInt(Number(liSuiAmount) * 10 ** suiDecimal);
-  };
+    liSuiAmountBigint = BigInt(Number(liSuiAmount) * 10 ** SUI_DECIMALS);
 
-  const handleStake = async () => {
     // stake SUI coins
-    const txb = await withdrawSUI(
+    txb = await withdrawSUI(
       $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiCoins,
       liSuiAmountBigint
     );
+    txb.setSender(
+      $walletStateAtom.wallets[$walletStateAtom.walletIdx].walletAccount.address
+    );
+    loadingSimulateTx = true;
+    dryRunTransactionBlock(txb)
+      .then((resp) => {
+        log("dryRunTransactionBlock", resp);
+        resp.balanceChanges.forEach((balance) => {
+          if (balance.coinType === SUI_TYPE_ARG) {
+            suiBalanceChange = BigInt(balance.amount);
+            liSuiRatio = Number(suiBalanceChange) / Number(liSuiAmountBigint);
+          }
+        });
+        loadingSimulateTx = false;
+      })
+      .catch((e: Error) => {
+        addToastMessage(`Error to simulate stake SUI: ${e.message}`, "error");
+        loadingSimulateTx = false;
+      });
+  };
 
+  const handleStake = async () => {
     callWallet(txb)
       .then((object) => {
         if (object.errors) {
@@ -92,7 +121,7 @@
           Number(
             $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiBalance
           ) /
-          10 ** suiDecimal
+          10 ** SUI_DECIMALS
         ).toString()
       );
     }}>MAX</button
@@ -104,15 +133,18 @@
   </div>
 {/if}
 
-<div class="flex flex-col gap-2 w-full">
+<div
+  class="flex flex-col gap-2 w-full {loadingSimulateTx &&
+    'animate-pulse blur-sm'}"
+>
   <div class="flex justify-between w-full">
     <div>You will receive</div>
-    <div>0 SUI</div>
+    <div>{suiToString(suiBalanceChange)} SUI</div>
   </div>
 
   <div class="flex justify-between w-full">
     <div>Exchange rate</div>
-    <div>1 liSUI = 1.01 SUI</div>
+    <div>1 liSUI = {round(liSuiRatio)} SUI</div>
   </div>
 </div>
 
