@@ -2,7 +2,13 @@
 import Footer from "../components/Footer.astro";
 import Navbar from "../components/Navbar.astro";
 
-const { content } = Astro.props;
+interface Props {
+  title: string;
+  description: string;
+  isWallet: boolean;
+}
+
+const { title, description, isWallet } = Astro.props;
 ---
 
 <html lang="en">
@@ -10,15 +16,13 @@ const { content } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <title>{content.title}</title>
-    <meta name="description" content={content.description} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
   </head>
   <body>
     <div class="flex flex-col min-h-screen bg-base-200">
-      <Navbar />
-      <div
-        class="flex-grow container mx-auto flex flex-col justify-items-center items-center gap-4 mt-2"
-      >
+      <Navbar isWallet={isWallet} />
+      <div class="flex-grow mt-2">
         <slot />
       </div>
       <Footer />

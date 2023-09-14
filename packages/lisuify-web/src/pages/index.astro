@@ -6,13 +6,12 @@ import Stats from "../components/Stats.svelte";
 import Toast from "../components/Toast.svelte";
 ---
 
-<MainLayout
-  content={{
-    title: pageTitle,
-    description: pageDescription,
-  }}
->
-  <Stats client:only />
-  <Card client:only />
-  <Toast client:only />
+<MainLayout title={pageTitle} description={pageDescription} isWallet={true}>
+  <div
+    class="container mx-auto flex flex-col justify-items-center items-center gap-4"
+  >
+    <Stats client:only />
+    <Card client:only />
+    <Toast client:only />
+  </div>
 </MainLayout>
