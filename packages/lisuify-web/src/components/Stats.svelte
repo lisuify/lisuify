@@ -1,25 +1,28 @@
 <script lang="ts">
   import { statsAtom } from "../stores/statsStore";
+  import { suiToString } from "../utils";
 </script>
 
 <div
   class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg"
 >
   <div class="stat">
-    <div class="stat-title">SUI Staking</div>
-    <div class="stat-value">31K</div>
-    <div class="stat-desc">= ~30K LiSui</div>
+    <div class="stat-title text-sm">Total SUI Staking</div>
+    <div class="stat-value text-xl">{suiToString($statsAtom.totalSuiStaking)}</div>
+    <div class="stat-desc">
+      = ~{suiToString($statsAtom.totalSuiStaking / $statsAtom.liSuiRatio)} LiSui
+    </div>
   </div>
 
   <div class="stat">
-    <div class="stat-title">LiSui / SUI</div>
-    <div class="stat-value">{$statsAtom.liSuiRatio}</div>
-    <!-- <div class="stat-desc">↗︎ 0.01 (1%)</div> -->
+    <div class="stat-title text-sm">SUI / LiSui</div>
+    <div class="stat-value text-xl">{suiToString($statsAtom.liSuiRatio)} SUI</div>
+    <div class="stat-desc">= 1 liSUI</div>
   </div>
 
   <div class="stat">
-    <div class="stat-title">APY</div>
-    <div class="stat-value">5.5%</div>
-    <!-- <div class="stat-desc">↘︎ 0.01 (1%)</div> -->
+    <div class="stat-title text-sm">APY</div>
+    <div class="stat-value text-xl">5.5%</div>
+    <div class="stat-desc">↗︎ 0.01 (1%)</div>
   </div>
 </div>

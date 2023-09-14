@@ -64,7 +64,7 @@ export const getLiSUIRatio = async () => {
   log("stakePool.lastUpdateSuiBalance", stakePool.lastUpdateSuiBalance);
   log("stakePool.lastUpdateTokenSupply", stakePool.lastUpdateTokenSupply);
   if (stakePool.lastUpdateTokenSupply <= 0) {
-    return BigInt(0);
+    return BigInt(1 * 10 ** 9); // use 1 to prevent zero division
   }
   return stakePool.lastUpdateSuiBalance / stakePool.lastUpdateTokenSupply;
 };
