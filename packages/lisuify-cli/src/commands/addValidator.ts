@@ -6,14 +6,27 @@ import {execute} from '../execute';
 export const installAddValidator = (program: Command) => {
   program
     .command('add-validator')
-    .argument('validator', 'Validator pool id')
+    .option('--pool <id>', 'Validator pool id')
+    .option('--address <id>', 'Address')
     .action(addValidator);
 };
 
-const addValidator = async (validator: string) => {
+const addValidator = async ({
+  pool,
+  address,
+}: {
+  pool?: string;
+  address?: string;
+}) => {
   const txb = new TransactionBlock();
+  const suiSystem =
+    !pool || !address
+      ? await context.provider.getLatestSuiSystemState()
+      : undefined;
   context.stakePool.addValidator({
-    validatorPool: validator,
+    validatorPool: pool,
+    address,
+    suiSystem,
     txb,
   });
 

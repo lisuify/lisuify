@@ -4,6 +4,7 @@ module lisuify::coin {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
     use lisuify::stake_pool;
+    use sui::url;
 
     struct COIN has drop {}
     
@@ -12,9 +13,12 @@ module lisuify::coin {
             witness,
             9,
             b"liSUI",
-            b"Liquid stake",
+            b"Lisuify stake",
             b"Token representation of the staked SUI",
-            option::none(),
+            option::some(
+                url::new_unsafe_from_bytes(
+                    b"https://lisuify.com/logo.svg"
+            )),
             ctx
         );
         transfer::public_freeze_object(metadata);
