@@ -10,7 +10,7 @@ export const installUpdate = (program: Command) => {
 const update = async () => {
   const txb = new TransactionBlock();
   context.stakePool.update({
-    provider: context.provider,
+    // provider: context.provider,
     txb,
   });
 

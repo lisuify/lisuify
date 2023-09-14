@@ -34,6 +34,7 @@ module lisuify::stake_pool {
     const EWrongValidatorAddress: u64 = 14;
     const ETooEarlyToStakeReserve: u64 = 15;
     const EWrongAdminCap: u64 = 16;
+    const ENotEnoughSuiToWithdraw: u64 = 17;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -238,16 +239,16 @@ module lisuify::stake_pool {
         epoch: u64
     }
 
-    public entry fun start_update<C>(
+    fun start_update<C>(
         self: &mut StakePool<C>,
         ctx: &TxContext,
     ) {
         let epoch = tx_context::epoch(ctx);
-        assert!(epoch > self.last_update_epoch, ETooEarlyToUpdate);
+        /* assert!(epoch > self.last_update_epoch, ETooEarlyToUpdate);
         if (option::is_some(&self.update)) {
             let update = option::borrow(&mut self.update);
             assert!(epoch > update.updating_epoch, EUpdateIsAlreadyRunning);
-        };
+        }; */
         option::swap_or_fill(&mut self.update, StakePoolUpdate {
             pending_sui_balance: 0,
             updating_epoch: epoch,
@@ -267,25 +268,27 @@ module lisuify::stake_pool {
         validator_sui_balance: u64,
     }
 
-    public entry fun update_validator<C>(
+    fun update_validator<C>(
         self: &mut StakePool<C>,
         sui_system: &mut SuiSystemState,
-        validator_pool_id: ID,
         ctx: &TxContext,
     ) {
+        /*
         let epoch = tx_context::epoch(ctx);
         if (option::is_none(&self.update)
             || epoch != option::borrow(&self.update).updating_epoch
         ) {
             start_update(self, ctx);
-        };
+        };*/
         let stake_pool_id = object::id(self);
         let update = option::borrow_mut(&mut self.update);
+        /*
         let validator_count = vector::length(&self.validators);
         assert!(
             update.updated_validators < validator_count,
             EAlreadyUpdated
         );
+        */
         let validator = vector::borrow_mut(
             &mut self.validators,
             update.updated_validators
@@ -293,7 +296,6 @@ module lisuify::stake_pool {
         let validator_sui_balance = validator_entry::update(
             validator,
             sui_system,
-            validator_pool_id,
             ctx,
         );
         update.pending_sui_balance = update.pending_sui_balance + validator_sui_balance;
@@ -323,10 +325,10 @@ module lisuify::stake_pool {
     ) {
         assert!(option::is_some(&self.update), ENotUpdating);
         let update = option::extract(&mut self.update);
-        assert!(
+        /* assert!(
             update.updated_validators == vector::length(&self.validators),
             ENotAllUpdated
-        );
+        ); */
         assert!(
             update.pending_sui_balance >= self.curret_sui_balance,
             ESlashed
@@ -357,6 +359,36 @@ module lisuify::stake_pool {
             new_sui_balance: self.last_update_sui_balance,
             new_token_supply: self.last_update_token_supply
         })
+    }
+
+    public entry fun update<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        max_validators: u64,
+        ctx: &TxContext,
+    ) {
+        let epoch = tx_context::epoch(ctx);
+        assert!(epoch > self.last_update_epoch, EAlreadyUpdated);
+        if (option::is_none(&self.update)
+            || epoch != option::borrow(&self.update).updating_epoch
+        ) {
+            start_update(self, ctx);
+        };
+        let validator_count = vector::length(&self.validators);
+        while (
+            option::borrow(&self.update).updated_validators < validator_count &&
+            max_validators > 0
+        ) {
+            update_validator(
+                self,
+                sui_system,
+                ctx,
+            );
+            max_validators = max_validators - 1;
+        };
+        if (option::borrow(&self.update).updated_validators == validator_count) {
+            finalize_update(self);
+        }
     }
 
     fun deposit_stake_internal<C>(
@@ -537,6 +569,79 @@ module lisuify::stake_pool {
         );
     }
 
+    fun withdraw_sui_internal<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        sui_amount: u64,
+        ctx: &mut TxContext,
+    ): (Balance<SUI>, u64) {
+        let from_reserve = math::min(sui_amount, balance::value(&self.reserve));
+        let result = balance::split(
+            &mut self.reserve,
+            from_reserve
+        );
+        let fresh_part = from_reserve;
+        let withdrawn = from_reserve;
+
+        let i = 0;
+        let count = vector::length(&self.validators);
+        while (i < count && withdrawn < sui_amount) {
+            let validator = vector::borrow_mut(&mut self.validators, i);
+            // ignore rewards part until restake rule will be implemented
+            let (sui, _) = validator_entry::withdraw(
+                validator,
+                sui_system,
+                sui_amount - withdrawn,
+                ctx,
+            );
+            let sui_balance = balance::value(&sui);
+            withdrawn = withdrawn + sui_balance;
+            balance::join(&mut result, sui);
+            i = i + 1;
+        };
+
+        if (withdrawn > sui_amount) {
+            // return the rest to the reserve
+            balance::join(
+                &mut self.reserve,
+                balance::split(&mut result, withdrawn - sui_amount)
+            );
+        };
+
+        (result, fresh_part)
+    }
+
+    fun withdraw_fresh_stakes<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        sui_amount: u64,
+        ctx: &mut TxContext,
+    ): (vector<StakedSui>, u64)
+    {
+        let result = vector::empty();
+        let withdrawn = 0;
+        let i = 0;
+        let count = vector::length(&self.validators);
+        while (i < count && withdrawn + MIN_STAKING_THRESHOLD <= sui_amount) {
+            let validator = vector::borrow_mut(&mut self.validators, i);
+            let staked = validator_entry::withdraw_fresh(
+                validator,
+                sui_amount - withdrawn,
+                ctx,
+            );
+            if (option::is_some(&staked)) {
+                let stake = option::destroy_some(staked);
+                let stake_balance = staking_pool::staked_sui_amount(&stake);
+                vector::push_back(&mut result, stake);
+                withdrawn = withdrawn + stake_balance;
+            } else {
+                option::destroy_none(staked)
+            };
+            i = i + 1;
+        };
+        (result, withdrawn)
+    }
+
     struct Withdrawn has copy, drop {
         stake_pool_id: ID,
         token_burnt: u64,
@@ -565,64 +670,28 @@ module lisuify::stake_pool {
             self,
             token_amount - withdraw_fee
         );
-        let from_reserve = math::min(sui_amount, balance::value(&self.reserve));
-        let sui_result = balance::split(
-            &mut self.reserve,
-            from_reserve
+
+        let (sui_result, fresh_part) = withdraw_sui_internal(
+            self,
+            sui_system,
+            sui_amount,
+            ctx,
         );
-        let staked_result = vector::empty();
+        let result_total = balance::value(&sui_result);
+
+        let (staked_result, staked_sui_withdrawn) = withdraw_fresh_stakes(
+            self,
+            sui_system,
+            sui_amount - result_total,
+            ctx,
+        );
+        result_total = result_total + staked_sui_withdrawn;
+        fresh_part = fresh_part + staked_sui_withdrawn;
+
         let token_result = balance::zero();
-        let result_total = from_reserve;
-        let fresh_part = from_reserve;
-
-        let i = 0;
-        let count = vector::length(&self.validators);
-        while (i < count && result_total < sui_amount) {
-            let validator = vector::borrow_mut(&mut self.validators, i);
-            // ignore rewards part until restake rule will be implemented
-            let (sui, _) = validator_entry::withdraw(
-                validator,
-                sui_system,
-                sui_amount - result_total,
-                ctx,
-            );
-            let sui_balance = balance::value(&sui);
-            result_total = result_total + sui_balance;
-            balance::join(&mut sui_result, sui);
-            i = i + 1;
-        };
-
-        let staked_sui_withdrawn = 0;
-        let i = 0;
-        while (i < count && result_total + MIN_STAKING_THRESHOLD <= sui_amount) {
-            let validator = vector::borrow_mut(&mut self.validators, i);
-            let staked = validator_entry::withdraw_fresh(
-                validator,
-                sui_amount - result_total,
-                ctx,
-            );
-            if (option::is_some(&staked)) {
-                let stake = option::destroy_some(staked);
-                let stake_balance = staking_pool::staked_sui_amount(&stake);
-                vector::push_back(&mut staked_result, stake);
-                result_total = result_total + stake_balance;
-                fresh_part = fresh_part + stake_balance;
-                staked_sui_withdrawn = staked_sui_withdrawn + stake_balance;
-            } else {
-                option::destroy_none(staked)
-            };
-            i = i + 1;
-        };
 
         let token_returned = 0;
-        if (result_total >= sui_amount) {
-            // return the rest to the reserve
-            balance::join(
-                &mut self.reserve,
-                balance::split(&mut sui_result, result_total - sui_amount)
-            );
-            result_total = sui_amount;
-        } else {
+        if (result_total < sui_amount) {
             // return non withdrawable part back as coins
             token_returned = get_token_amount(self, sui_amount - result_total);
             balance::join(
@@ -706,6 +775,84 @@ module lisuify::stake_pool {
         } else {
             balance::destroy_zero(token)
         }
+    }
+
+    public fun withdraw_sui_non_entry<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        token_balance: Balance<C>,
+        ctx: &mut TxContext,
+    ): Balance<SUI> {
+        let token_amount = balance::value(&token_balance);
+        let withdraw_fee = ((((token_amount as u128)
+            * (self.withdraw_fee_bpc as u128) + ((MAX_BPC - 1) as u128))
+            / (MAX_BPC as u128)) as u64);
+        let sui_amount = get_sui_amount(
+            self,
+            token_amount - withdraw_fee
+        );
+
+        let (sui_result, fresh_part) = withdraw_sui_internal(
+            self,
+            sui_system,
+            sui_amount,
+            ctx,
+        );
+        assert!(balance::value(&sui_result) == sui_amount, ENotEnoughSuiToWithdraw);
+
+        let token_fee = ((((get_token_amount(self, fresh_part) as u128)
+            * (self.fresh_deposit_fee_bpc as u128)
+            + ((MAX_BPC - 1) as u128))
+                / (MAX_BPC as u128)) as u64);
+        let fees_collected = math::min(withdraw_fee + token_fee, token_amount);
+        let fee_balance = balance::split(
+            &mut token_balance,
+            fees_collected
+        );
+        balance::join(&mut self.fees, fee_balance);
+
+        let token_burnt = balance::value(&token_balance);
+        balance::decrease_supply(
+            coin::supply_mut(&mut self.treasury),
+            token_balance
+        );
+        
+        self.curret_sui_balance = self.curret_sui_balance - sui_amount;
+
+        event::emit(Withdrawn {
+            stake_pool_id: object::id(self),
+            token_burnt,
+            sui_withdrawn: sui_amount,
+            staked_sui_withdrawn: 0,
+            token_returned: 0,
+            fees_collected,
+            new_curret_sui_balance: self.curret_sui_balance,
+            fresh_deposit_fee_bpc: self.fresh_deposit_fee_bpc,
+            withdraw_fee_bpc: self.withdraw_fee_bpc,
+            last_update_sui_balance: self.last_update_sui_balance,
+            last_update_token_supply: self.last_update_token_supply
+        });
+
+        sui_result
+    }
+
+    public entry fun withdraw_sui<C>(
+        self: &mut StakePool<C>,
+        sui_system: &mut SuiSystemState,
+        token: Coin<C>,
+        ctx: &mut TxContext,
+    ) {
+        let sui = withdraw_sui_non_entry(
+            self,
+            sui_system,
+            coin::into_balance(token),
+            ctx
+        );
+
+        pay::keep(
+            coin::from_balance(sui, ctx),
+            ctx,
+        );
     }
 
     struct ReserveStaked has copy, drop {
