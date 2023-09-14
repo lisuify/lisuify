@@ -21,6 +21,10 @@ export function floor(num: number, decimal: number = 3): number {
 
 const suiDecimalDivisor = 10 ** suiDecimal;
 
+export const suiToNumber = (amount: bigint | number) => {
+  return Number(amount) / suiDecimalDivisor;
+};
+
 export const suiToString = (amount: bigint | number) => {
   return floor(Number(amount) / suiDecimalDivisor).toString();
 };

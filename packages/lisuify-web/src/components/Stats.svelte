@@ -1,6 +1,6 @@
 <script lang="ts">
   import { statsAtom } from "../stores/statsStore";
-  import { suiToString } from "../utils";
+  import { floor, round, suiToNumber, suiToString } from "../utils";
 </script>
 
 <div
@@ -8,15 +8,21 @@
 >
   <div class="stat">
     <div class="stat-title text-sm">Total SUI Staking</div>
-    <div class="stat-value text-xl">{suiToString($statsAtom.totalSuiStaking)}</div>
+    <div class="stat-value text-xl">
+      {suiToString($statsAtom.totalSuiStaking)}
+    </div>
     <div class="stat-desc">
-      = ~{suiToString($statsAtom.totalSuiStaking / $statsAtom.liSuiRatio)} LiSui
+      = ~{round(
+        suiToNumber($statsAtom.totalSuiStaking) / $statsAtom.liSuiRatio
+      )} LiSui
     </div>
   </div>
 
   <div class="stat">
     <div class="stat-title text-sm">SUI / LiSui</div>
-    <div class="stat-value text-xl">{suiToString($statsAtom.liSuiRatio)} SUI</div>
+    <div class="stat-value text-xl">
+      {round($statsAtom.liSuiRatio)} SUI
+    </div>
     <div class="stat-desc">= 1 liSUI</div>
   </div>
 

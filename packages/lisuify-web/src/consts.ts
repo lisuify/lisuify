@@ -14,3 +14,12 @@ export const originalLisuifyId = import.meta.env.PUBLIC_ORIGINAL_LISUIFY_ID;
 export const lisuifyId = import.meta.env.PUBLIC_LISUIFY_ID;
 
 export const stakePoolId = import.meta.env.PUBLIC_STAKE_POOL_ID;
+
+export const MENU = {
+  "Getting Started": [
+    "/docs/getting-started/what-is-lisuify",
+    "/docs/getting-started/what-is-lisui",
+    "/docs/getting-started/faq",
+  ],
+  LiSuify: ["/docs/lisuify/introduction", "/docs/lisuify/liquid-staking"],
+};

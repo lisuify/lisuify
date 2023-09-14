@@ -3,16 +3,7 @@ import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon";
 import { getCollection } from "astro:content";
 import MainLayout from "./main.astro";
-import { fade } from "astro:transitions";
-
-const SIDEBAR_ITEMS = {
-  "Get Started": [
-    "/docs/get-started/what-is-lisuify",
-    "/docs/get-started/what-is-lisui",
-    "/docs/get-started/faq",
-  ],
-  LiSuify: ["/docs/lisuify/introduction", "/docs/lisuify/liquid-staking"],
-};
+import { MENU } from "../consts";
 
 interface Props {
   title: string;
@@ -32,7 +23,7 @@ const { title, headings } = Astro.props;
       data-pagefind-ignore
     >
       <div
-        class="pt-4 pr-16 w-5/6 md:w-1/4 h-screen fixed overflow-y-auto overflow-x-hidden bg-base-200"
+        class="pr-16 w-5/6 md:w-1/4 h-screen fixed overflow-y-auto overflow-x-hidden bg-base-200"
       >
         <button
           id="close"
@@ -43,27 +34,22 @@ const { title, headings } = Astro.props;
         </button>
         <div class="md:float-right w-full max-md:py-4 px-8 md:px-4">
           {
-            Object.keys(SIDEBAR_ITEMS).map((section) => {
+            Object.keys(MENU).map((section) => {
               return (
                 <>
                   <h2 class="text-lg font-bold mt-8 py-2 px-4">{section}</h2>
-                  {SIDEBAR_ITEMS[section as keyof typeof SIDEBAR_ITEMS].map(
-                    (path) => (
-                      <a
-                        href={path}
-                        class={`relative block py-2 px-4 transition-colors
+                  {MENU[section as keyof typeof MENU].map((path) => (
+                    <a
+                      href={path}
+                      class={`relative block py-2 px-4 transition-colors
                     ${
                       Astro.url.pathname === path &&
                       'after:content-[""] after:hidden md:after:block after:w-3 after:h-3 after:absolute after:top-4 after:rotate-45 after:right-[-5.4rem]'
                     }`}
-                      >
-                        {
-                          docs.find((doc) => path.endsWith(doc.slug))?.data
-                            .title
-                        }
-                      </a>
-                    )
-                  )}
+                    >
+                      {docs.find((doc) => path.endsWith(doc.slug))?.data.title}
+                    </a>
+                  ))}
                 </>
               );
             })
@@ -169,7 +155,6 @@ const { title, headings } = Astro.props;
                   (Array.from(headings).indexOf(heading) - headings.length) * 32
                 }px)`;
                 heading.firstElementChild.classList.add("font-bold");
-                console.log(heading.firstElementChild);
               }
               const oldHeading = document.querySelector(
                 `#_anchor [href="${
