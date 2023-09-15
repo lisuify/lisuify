@@ -1,5 +1,5 @@
 ---
-import { NAVIGATION_MENU } from "../consts";
+import { NAVIGATION_MENU, network } from "../consts";
 import ConnectWalletDropdown from "./ConnectWalletDropdown.svelte";
 import SunMoon from "./SunMoon.astro";
 
@@ -61,6 +61,7 @@ const { isWallet } = Astro.props;
     }
     <SunMoon />
     <div class="text-xl font-bold">LiSuify</div>
+    <div class="text-sm ml-2">{network}</div>
   </div>
   {
     () => {

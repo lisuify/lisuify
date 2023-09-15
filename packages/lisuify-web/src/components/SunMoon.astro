@@ -41,26 +41,18 @@
 <script is:inline>
 const localStorageKey = "darkMode";
 let localDarkMode = localStorage.getItem(localStorageKey);
-
-function setTheme(darkMode) {
-  localStorage.setItem(localStorageKey, darkMode ? "true" : "false");
-  document
-    ?.querySelector("html")
-    ?.setAttribute("data-theme", darkMode ? "dark" : "light");
-}
-
-// initial dark mode
+let darkMode = false;
+// initial dark mode from local storage or media
 switch (localDarkMode) {
   case "true":
-    setTheme(true);
+    darkMode = true;
     break;
   case "false":
-    setTheme(false);
+    darkMode = false;
     break;
   case null:
-    setTheme(
-      window?.matchMedia?.("(prefers-color-scheme:dark)")?.matches || false
-    );
+    darkMode =
+      window?.matchMedia?.("(prefers-color-scheme:dark)")?.matches || false;
 }
 
 const button = document.getElementById("darkmode-toggle");
@@ -71,10 +63,20 @@ const setToggleClass = (darkMode) => {
     button.classList.remove("swap-active");
   }
 };
-setToggleClass(localDarkMode);
+
+function setTheme(darkMode) {
+  setToggleClass(darkMode);
+
+  localStorage.setItem(localStorageKey, darkMode ? "true" : "false");
+  document
+    ?.querySelector("html")
+    ?.setAttribute("data-theme", darkMode ? "dark" : "light");
+}
+
 button.onclick = () => {
-  localDarkMode = !localDarkMode;
-  setToggleClass(localDarkMode);
-  setTheme(localDarkMode);
+  darkMode = !darkMode;
+  setTheme(darkMode);
 };
+
+setTheme(darkMode);
 </script>

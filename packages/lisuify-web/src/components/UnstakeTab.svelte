@@ -127,7 +127,7 @@
   class="flex w-full p-0 btn-group h-12 input input-bordered {liSuiAmountError &&
     'border-error'}"
 >
-  <div class="p-2" style="fill:#6fbcf0"><LiSuiLogo /></div>
+  <div class="p-2 select-none" style="fill:#6fbcf0"><LiSuiLogo /></div>
   <input
     type="number"
     placeholder="liSUI amount"
