@@ -10,8 +10,8 @@ interface Props {
 const { isWallet } = Astro.props;
 ---
 
-<div class="navbar flex-row z-50">
-  <div class="navbar-start flex items-center lg:justify-start">
+<div class="navbar flex flex-col items-start justify-center md:flex-row z-50">
+  <div class="navbar-start flex items-center justify-start">
     {
       () => {
         if (isWallet) {
@@ -93,7 +93,7 @@ const { isWallet } = Astro.props;
       }
     }
   }
-  <div class="navbar-end justify-end w-screen lg:w-1/2">
+  <div class="navbar-end justify-center md:justify-end w-screen lg:w-1/2">
     {
       () => {
         if (isWallet) {
