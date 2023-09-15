@@ -561,10 +561,33 @@ module lisuify::stake_pool {
         );
         let fresh_part = from_reserve;
 
+        // First use non active
         let i = 0;
         let count = vector::length(&self.validators);
         while (i < count && balance::value(&result) < sui_amount) {
             let validator = vector::borrow_mut(&mut self.validators, i);
+            if (validator_entry::is_active(validator)) {
+                i = i + 1;
+                continue
+            };
+            let sui = validator_entry::withdraw(
+                validator,
+                sui_system,
+                sui_amount - balance::value(&result),
+                ctx,
+            );
+            balance::join(&mut result, sui);
+            i = i + 1;
+        };
+
+        // Use the rest
+        let i = 0;
+        while (i < count && balance::value(&result) < sui_amount) {
+            let validator = vector::borrow_mut(&mut self.validators, i);
+            if (!validator_entry::is_active(validator)) {
+                i = i + 1;
+                continue
+            };
             let sui = validator_entry::withdraw(
                 validator,
                 sui_system,
