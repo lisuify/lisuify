@@ -1,7 +1,13 @@
 <script lang="ts">
   import LiSuiLogo from "./icons/LiSuiLogo.svelte";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
-  import { blockExplorerLink, log, round, suiToString } from "../utils";
+  import {
+    blockExplorerLink,
+    log,
+    round,
+    suiToNumber,
+    suiToString,
+  } from "../utils";
   import {
     callWallet,
     dryRunTransactionBlock,
@@ -20,9 +26,27 @@
   let txb: TransactionBlock;
   let loadingSimulateTx = false;
 
-  const handlAmount = async (target: string) => {
+  // use to trigger when stop typing for 1 second
+  let inputTimeout: NodeJS.Timeout;
+  const onInput = (target: string) => {
+    clearTimeout(inputTimeout);
+    inputTimeout = setTimeout(function () {
+      handleAmount(target);
+    }, 1000);
+  };
+
+  const handleAmount = async (target: string) => {
     liSuiAmountError = "";
     liSuiAmount = target;
+    if (
+      Number(liSuiAmount) >
+      suiToNumber(
+        $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiBalance
+      )
+    ) {
+      liSuiAmountError = "liSUI amount must not more than balance";
+      return;
+    }
     if (
       Number.isFinite(liSuiAmount) ||
       Number.isNaN(liSuiAmount) ||
@@ -110,13 +134,13 @@
     class="flex-grow px-2 bg-base-100 w-full outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     value={liSuiAmount}
     on:input={(e) => {
-      handlAmount(e.currentTarget.value);
+      onInput(e.currentTarget.value);
     }}
   />
   <button
     class="btn btn-ghost primary h-full"
     on:click={() => {
-      handlAmount(
+      handleAmount(
         (
           Number(
             $walletStateAtom.wallets[$walletStateAtom.walletIdx].liSuiBalance
