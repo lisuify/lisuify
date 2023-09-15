@@ -191,10 +191,12 @@ export class StakePool {
       }
       if (validators.length === 0) {
         validators.push(
-          ...suiSystem.activeValidators.map(({stakingPoolId, suiAddress}) => ({
-            validatorPool: stakingPoolId,
-            address: suiAddress,
-          }))
+          ...suiSystem.activeValidators
+            .map(({stakingPoolId, suiAddress}) => ({
+              validatorPool: stakingPoolId,
+              address: suiAddress,
+            }))
+            .slice(0, 20)
         );
       }
     } else {

@@ -2,7 +2,7 @@ import {TransactionBlock} from '@mysten/sui.js/transactions';
 import {context} from './context';
 
 export const execute = async (txb: TransactionBlock) => {
-  txb.setGasBudget(1000000000);
+  txb.setGasBudget(200000000);
   txb.setSenderIfNotSet(context.wallet.getPublicKey().toSuiAddress());
   const txBytes = await txb.build({
     client: context.provider,
