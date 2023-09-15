@@ -16,7 +16,6 @@ export const stakePoolId = import.meta.env.PUBLIC_STAKE_POOL_ID;
 export const SIDE_MENU = {
   "Getting Started": [
     "/docs/getting-started/what-is-lisuify",
-    "/docs/getting-started/what-is-lisui",
     "/docs/getting-started/faq",
   ],
   LiSuify: ["/docs/lisuify/introduction", "/docs/lisuify/liquid-staking"],
@@ -25,7 +24,6 @@ export const SIDE_MENU = {
 export const NAVIGATION_MENU = {
   "Getting Started": {
     "What is LiSuify?": "/docs/getting-started/what-is-lisuify",
-    "What is liSUI?": "/docs/getting-started/what-is-lisui",
     FAQ: "/docs/getting-started/faq",
   },
   Documents: {
