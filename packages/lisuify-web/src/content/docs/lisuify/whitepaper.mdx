@@ -1,0 +1,87 @@
+---
+title: The Lisuify Staking Pool Whitepaper
+---
+import { InlineMath } from 'react-katex';
+
+## Introduction
+
+In the dynamic landscape of blockchain technology, the SUI Staking Pool has emerged as a pivotal facilitator, adeptly bridging the gap between stakers and validators. This initiative found its grounding on July 27, when the Sui framework underwent a significant upgrade. This enhancement empowered developers to craft non-custodial liquid staking applications directly on Sui, a feature that this project leverages to its fullest potential.
+
+At the heart of this system lies a transformative mechanism that metamorphoses staked SUI objects into a liquid asset, liSUI, which can be seamlessly integrated and utilized in various DeFi platforms. This transformation transcends a mere change in form; it signifies the evolution of a rigid asset into a fluid entity capable of navigating the vast and complex oceans of decentralized finance with ease and efficiency.
+
+The role of the staking pool extends beyond merely creating a liquid representation of staked assets. It further amalgamates stakes from diverse validators, converging them into a single coin. This innovative process not only mitigates the inherent risks associated with individual validators but also pioneers an automated management system that maintains a vigilant oversight on the performance of validators. In instances where a validator fails to yield satisfactory rewards, the system proactively reallocates the stake to a more promising validator, thus safeguarding the stakeholders' interests and ensuring they remain on the winning side.
+
+Delving deeper into the staking implementation, it's noteworthy that the system utilizes single validator pools coupled with a virtual pool token. However, instead of conventional pool tokens, users are endowed with a staked SUI object, which encapsulates an activation epoch field within. This nuanced approach means that the staked SUI object is not a liquid asset in the traditional sense. Its liquidity is constrained by the fact that it cannot be merged if there are discrepancies in the validator or activation epoch, and its utility is limited as it does not function as a coin, thus restricting its integration with existing DeFi protocols. Addressing these limitations, our protocol introduces a solution that not only enhances the liquidity of these assets but also expands their utility in the DeFi space, paving the way for a more inclusive and versatile staking ecosystem.
+
+## The Reserve System
+
+A distinctive feature of the Lisuify Staking Pool is its reserve system, which collects deposits until the end of the epoch. This strategy ensures that the deposited assets remain available for withdrawals during the ongoing epoch, enhancing the liquidity and flexibility of the staking process.
+
+### Note:
+- **Stakes Created in the Current Epoch**: Stakes created during the current epoch may not be withdrawn immediately to prevent potential liquidity issues. To mitigate the likelihood of insufficient funds for withdrawals, the system postpones the staking process until the final moments of the epoch. However, in urgent scenarios, users have the option to withdraw in the form of stakes.
+- **Fresh Stakes Depositing**: In the production version of the system, depositing fresh stakes during the epoch will be restricted to maintain stability and security. Currently, this feature is enabled for demonstration purposes.
+
+## liSUI Token Pricing
+
+The price of the liSUI token is a critical aspect of the staking pool, determined by the following ratio:
+
+$$
+\text{{Price of liSUI}} = \frac{{(\text{{reserve}} + \text{{total stake balances (including rewards)}})}}{{\text{{liSUI token supply}}}}
+$$
+
+This ratio is updated once per epoch during the finalization of the update process, ensuring a fair and accurate representation of the token's value.
+
+## Epoch Start Update
+
+At the onset of each new epoch, an update process is initiated. This process is permissionless, allowing any participant to execute it. Due to potential limitations on transaction size, especially with a large number of validators, this update can be executed in multiple steps. It is imperative to complete this update before any operations in the new epoch can commence, as utilizing an outdated liSUI price can jeopardize the system's stability.
+
+### Note:
+- **Last-Minute SUI Deposits**: In the final moments of an epoch, any SUI deposits are automatically staked to ensure the creation of stakes within the same epoch. This strategy aims to expedite the reward accumulation process, allowing users to start gathering rewards as soon as possible.
+
+## Strategic Staking of Reserved Funds at Epoch End
+
+As we transition towards the end of an epoch, the staking pool enters a vital phase - the autonomous staking of reserved funds. This process unfolds within a designated stake reserve time window, embodying the permissionless essence of the system.
+
+In this phase, the emphasis is on ensuring that the staking process can proceed seamlessly, without any potential delays or hindrances that might arise due to centralized decision-making. The system is designed to prioritize timely staking, even if the validator manager does not intervene, thereby eliminating the risks associated with centralized control and potential inactivity.
+
+While the validator manager has the ability to influence the distribution of the reserve stake by selecting a specific validator or setting a default one, the primary objective remains to facilitate uninterrupted staking. This ensures that the stakeholders are not at a disadvantage due to any delays in decision-making, and the staking process continues to function efficiently, maximizing the benefits for all involved.
+
+It's important to note that, as of now, the system does not offer the option to select specific validators during the withdrawal process. This means that the withdrawal of stakes operates on a neutral basis, independent of the choices made during the staking of reserved funds, with a preference towards prioritizing validators marked as non-active. This strategy ensures that the pool maintains a healthy balance and optimal performance by gradually phasing out non-active validators, thereby fostering a more stable and rewarding environment for all stakeholders.
+
+This stage of strategic staking at the epoch's end showcases the SUI Staking Pool's commitment to fostering a decentralized and efficient environment, where the processes are streamlined to offer maximum benefits to the stakeholders, without being hampered by centralized decision-making.
+
+## Restaking: A Proactive Approach to Managing Validators
+
+In the dynamic environment of the SUI Staking Pool, there exists a mechanism to proactively manage validators, especially when issues arise. This process, known as restaking, allows for a strategic reallocation of funds to maintain the health and performance of the pool.
+
+During this process, the validator manager has the authority to forcibly move funds from a problematic validator back to the reserve. This action, although necessary to safeguard the pool's integrity, comes with a downside - a temporary dip in the Annual Percentage Yield (APY). Since the funds will be restaked only at the end of the epoch, they miss out on one epoch's worth of rewards, resulting in a lower APY. To mitigate the potential impact of this action, there is a limitation on the amount of funds that can be unstaked during a single epoch, which is proportionate to the current total value of the pool.
+
+Furthermore, the validator manager has the ability to mark a validator as inactive to prevent additional funds from being allocated to it. This step is often a precursor to a more permanent solution, where after clearing all stakes from the validator, the validator manager can remove it entirely from the pool. This removal is a decisive step to maintain the pool's optimal performance and to ensure that the stakeholders' interests are protected.
+
+Through the restaking process, the SUI Staking Pool demonstrates a commitment to maintaining a healthy and prosperous ecosystem, where actions are taken proactively to address issues and to foster a stable and rewarding staking environment.
+
+## Fee Structure
+
+In the SUI Staking Pool, the fee structure is meticulously designed to maintain a balance between the operational necessities and the stakeholders' interests. Here, we delve into the various facets of the fee structure that governs the operations within the pool:
+
+### Deposit Fees
+
+1. **Activated Stake Account Deposits**: Depositing an activated stake account into the pool does not incur any fee, facilitating a smooth and cost-effective process for stakeholders.
+
+2. **SUI Deposits**: When depositing SUI, the liSUI price utilized is projected from the next epoch to account for the one epoch of missing rewards associated with this deposit. Since the exact price for the next epoch is not known at the time of deposit, the current epoch price is used as a reference. However, to balance the potential discrepancy, an additional fee is levied. This fee manifests in the form of minting fewer liSUI tokens than what would be calculated by the standard formula. The collected fee is then distributed among all liSUI token holders, serving to compensate for the potential APY loss incurred due to the presence of non-activated stakes in the pool.
+
+### Withdrawal Fees
+
+1. **Reserve Utilization for Withdrawals**: The portion of the reserve used for withdrawals serves to compensate for the potential discrepancy in the deposit price. Since a fee has already been charged at the time of deposit, the corresponding liSUI tokens supplied by the withdrawer are not entirely burnt, as is the usual process to facilitate the return of SUI tokens. Instead, a portion of these liSUI tokens is collected and allocated for admin withdrawal, ensuring that the fee paid at the time of deposit is accurately accounted for without imposing any additional burden on the withdrawer.
+
+2. **liSUI Withdrawal Fee**: A separate fee is applied during the withdrawal process, which results in a slightly reduced amount of SUI being withdrawn. This fee is structured to maintain the operational stability of the pool.
+
+### Rewards Fee
+
+A distinct fee that is collected during the pool update process is the rewards fee. This fee, calculated as a percentage of the validator rewards accrued during the epoch change, serves a vital role in supporting the developer team that maintains and enhances the SUI Staking Pool. This mechanism ensures that the team is compensated for their efforts, fostering continuous innovation and development within the pool.
+
+Through this fee structure, the SUI Staking Pool aims to foster a fair and balanced ecosystem, where the fees are structured to compensate and benefit the community, ensuring a harmonious and prosperous staking environment.
+
+## Conclusion
+
+The SUI Staking Pool stands as a testament to innovation and efficiency in the blockchain space. Through its liquid coin wrapping, diversified risk management, and strategic reserve system, it offers a seamless and rewarding staking experience. As you venture into the world of SUI Staking Pool, you become a part of a system that embodies transparency, innovation, and prosperity, paving the way for a brighter and more secure financial future.
