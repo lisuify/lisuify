@@ -1,11 +1,13 @@
 <script lang="ts">
+  import { loadingStatsAtom } from "../stores/loadingStore";
   import { statsAtom } from "../stores/statsStore";
   import { round, suiToNumber, suiToString } from "../utils";
   import Info from "./icons/Info.svelte";
 </script>
 
 <div
-  class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg"
+  class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg {$loadingStatsAtom &&
+    'animate-pulse blur-sm'}"
 >
   <div class="stat">
     <div class="stat-title text-sm">Total SUI Staking</div>
