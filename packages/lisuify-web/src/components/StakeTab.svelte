@@ -1,7 +1,13 @@
 <script lang="ts">
   import SuiLogo from "./icons/SuiLogo.svelte";
   import { getWalletBalances, walletStateAtom } from "../stores/walletStore";
-  import { blockExplorerLink, log, round, suiToString } from "../utils";
+  import {
+    blockExplorerLink,
+    log,
+    round,
+    suiToNumber,
+    suiToString,
+  } from "../utils";
   import {
     callWallet,
     depositSUI,
@@ -24,11 +30,29 @@
   let txb: TransactionBlock;
   let loadingSimulateTx = false;
 
-  const handlAmount = async (target: string) => {
+  // use to trigger when stop typing for 1 second
+  let inputTimeout: NodeJS.Timeout;
+  const onInput = (target: string) => {
+    clearTimeout(inputTimeout);
+    inputTimeout = setTimeout(function () {
+      handleAmount(target);
+    }, 1000);
+  };
+
+  const handleAmount = async (target: string) => {
     suiAmountError = "";
     suiAmount = target;
     if (Number(suiAmount) < 0.1) {
       suiAmountError = "SUI amount must more than 0.1";
+      return;
+    }
+    if (
+      Number(suiAmount) >
+      suiToNumber(
+        $walletStateAtom.wallets[$walletStateAtom.walletIdx].suiBalance
+      )
+    ) {
+      suiAmountError = "SUI amount must not more than balance";
       return;
     }
     if (
@@ -289,13 +313,13 @@
       class="flex-grow px-2 bg-base-100 w-full outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       value={suiAmount}
       on:input={(e) => {
-        handlAmount(e.currentTarget.value);
+        onInput(e.currentTarget.value);
       }}
     />
     <button
       class="btn btn-ghost primary h-full"
       on:click={() => {
-        handlAmount(
+        handleAmount(
           suiToString(
             Math.max(
               Number(
