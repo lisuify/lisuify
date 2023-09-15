@@ -50,4 +50,8 @@ const showStakePool = async () => {
       context.stakePool.reserve / BigInt(Math.pow(10, SUI_DECIMALS))
     }`
   );
+  console.log('  Validators:');
+  for (const v of context.stakePool.validators) {
+    console.log(`    Pool id: ${v.validatorPoolId}`);
+  }
 };
