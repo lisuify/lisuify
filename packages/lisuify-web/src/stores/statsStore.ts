@@ -3,6 +3,7 @@ import type { Stats } from "../types";
 import { getCurrentSuiBalance, getLiSUIRatio } from "../client/lisuify";
 import { log } from "../utils";
 import { getValidatorAPY } from "../client/sui";
+import { loadingStatsAtom } from "./loadingStore";
 
 const defaulStats: Stats = {
   totalSuiStaking: BigInt(0),
@@ -33,6 +34,7 @@ const initialStats = async () => {
     liSuiRatio: liSuiRatio,
     validatorApy: averageApy,
   });
+  loadingStatsAtom.set(false);
 };
 
 initialStats();
