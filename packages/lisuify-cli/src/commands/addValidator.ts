@@ -1,6 +1,5 @@
 import {Command} from 'commander';
 import {context} from '../context';
-import {TransactionBlock} from '@mysten/sui.js/transactions';
 import {execute} from '../execute';
 
 export const installAddValidator = (program: Command) => {
@@ -18,17 +17,15 @@ const addValidator = async ({
   pool?: string;
   address?: string;
 }) => {
-  const txb = new TransactionBlock();
   const suiSystem =
     !pool || !address
       ? await context.provider.getLatestSuiSystemState()
       : undefined;
-  context.stakePool.addValidator({
+  for (const txb of context.stakePool.addValidator({
     validatorPool: pool,
     address,
     suiSystem,
-    txb,
-  });
-
-  await execute(txb);
+  })) {
+    await execute(txb);
+  }
 };

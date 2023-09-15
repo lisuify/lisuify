@@ -153,14 +153,15 @@ export class StakePool {
     validatorPool,
     address,
     suiSystem,
-    txb,
   }: {
     validatorPool?: string;
     address?: string;
     suiSystem?: SuiSystemStateSummary;
-    txb: TransactionBlock;
-  }) {
-    const validators = [];
+  }): TransactionBlock[] {
+    const validators: {
+      validatorPool: string;
+      address: string;
+    }[][] = [[]];
     if (!validatorPool || !address) {
       if (!suiSystem) {
         throw new Error('SuiSystem is required');
@@ -172,7 +173,7 @@ export class StakePool {
         if (!v) {
           throw new Error(`Can not find validaror by pool id ${validatorPool}`);
         }
-        validators.push({
+        validators[0].push({
           validatorPool: v.stakingPoolId,
           address: v.suiAddress,
         });
@@ -184,38 +185,53 @@ export class StakePool {
         if (!v) {
           throw new Error(`Can not find validaror by address ${address}`);
         }
-        validators.push({
+        validators[0].push({
           validatorPool: v.stakingPoolId,
           address: v.suiAddress,
         });
       }
-      if (validators.length === 0) {
-        validators.push(
-          ...suiSystem.activeValidators
-            .map(({stakingPoolId, suiAddress}) => ({
+      if (validators[0].length === 0) {
+        for (const {stakingPoolId, suiAddress} of suiSystem.activeValidators) {
+          const existing = this.validators.find(
+            ({validatorPoolId}) => validatorPoolId === stakingPoolId
+          );
+          if (!existing) {
+            if (validators[validators.length - 1].length >= 20) {
+              validators.push([]);
+            }
+            validators[validators.length - 1].push({
               validatorPool: stakingPoolId,
               address: suiAddress,
-            }))
-            .slice(0, 20)
-        );
+            });
+          }
+        }
       }
     } else {
-      validators.push({
+      validators[0].push({
         validatorPool,
         address,
       });
     }
 
-    for (const {validatorPool, address} of validators) {
-      addValidator({
-        lisuifyId: this.lisuifyId,
-        poolId: this.id,
-        validatorPool,
-        address,
-        cap: this.validatorManagerCapId,
-        txb,
-      });
+    const result = [];
+    for (const chunk of validators) {
+      if (chunk.length === 0) {
+        continue;
+      }
+      const txb = new TransactionBlock();
+      for (const {validatorPool, address} of chunk) {
+        addValidator({
+          lisuifyId: this.lisuifyId,
+          poolId: this.id,
+          validatorPool,
+          address,
+          cap: this.validatorManagerCapId,
+          txb,
+        });
+      }
+      result.push(txb);
     }
+    return result;
   }
 
   depositStake({stake, txb}: {stake: string; txb: TransactionBlock}) {
