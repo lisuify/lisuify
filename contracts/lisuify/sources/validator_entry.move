@@ -420,6 +420,7 @@ module lisuify::validator_entry {
             };
             let source_stake = if (principal >= split_request + MIN_STAKING_THRESHOLD) {
                 self.current_pool_tokens = self.current_pool_tokens -  split_request_pool_tokens;
+                i = i + 1;
                 staking_pool::split(
                     stake,
                     split_request,
@@ -433,6 +434,7 @@ module lisuify::validator_entry {
                     &mut self.stake_activation_epochs,
                     i
                 );
+                count = count - 1;
                 object_table::remove(
                     &mut self.stakes,
                     stake_activation_epoch
@@ -445,7 +447,6 @@ module lisuify::validator_entry {
             );
             max_amount = max_amount - math::min(balance::value(&sui), max_amount);
             balance::join(&mut result, sui);
-            i = i + 1;
         };
         result
     }

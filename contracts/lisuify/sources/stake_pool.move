@@ -219,18 +219,16 @@ module lisuify::stake_pool {
             object::id(cap) == self.validator_manager_cap_id,
             EWrongValidatorManagerCap
         );
+        assert!(
+            option::is_none(&self.update),
+            EOutdated
+        );
         let i = validator_index(self, validator_pool_id);
         assert!(option::is_some(&i), EValidatorDoesNotExist);
         let i = option::destroy_some(i);
-        let validator = vector::remove(&mut self.validators, i);
+        let validator = vector::swap_remove(&mut self.validators, i);
         validator_entry::destroy_empty(validator);
-        // sync update
-        if (option::is_some(&self.update)) {
-            let update = option::borrow_mut(&mut self.update);
-            if (i < update.updated_validators) {
-                update.updated_validators = update.updated_validators - 1;
-            }
-        };
+
         event::emit(ValidatorRemoved {
             stake_pool_id: object::id(self),
             validator_pool_id,

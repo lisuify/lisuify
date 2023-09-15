@@ -1,11 +1,11 @@
 [package]
 name = "lisuify"
 version = "0.0.1"
-published-at = "0xbecd91a6397b53413781a658058dc7f5fb0f464eea01d6fb47639a9b4555dbae"
+published-at = "0x5ce05dfef3709954416575d0f244713f23a88951a1fbeddb83e864a064305423"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/devnet" }
-SuiSystem = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-system", rev = "framework/devnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+SuiSystem = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-system", rev = "framework/testnet" }
 
 [addresses]
 lisuify = "0x0"
