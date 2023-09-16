@@ -9,6 +9,7 @@ import rehypeKatex from "rehype-katex";
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://lisuify.com",
   output: "static",
   compressHTML: false,
   integrations: [mdx(), tailwind(), svelte(), serviceWorker(), robotsTxt()],

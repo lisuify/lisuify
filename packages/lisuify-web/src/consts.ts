@@ -19,11 +19,7 @@ export const SIDE_MENU = {
     "/docs/getting-started/liquid-staking",
     // "/docs/getting-started/faq",
   ],
-  LiSuify: [
-    "/docs/lisuify/whitepaper",
-    "/docs/lisuify/api-reference",
-    //
-  ],
+  LiSuify: ["/docs/lisuify/whitepaper", "/docs/lisuify/api-reference"],
 };
 
 export const NAVIGATION_MENU = {
