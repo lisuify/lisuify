@@ -31,6 +31,13 @@ module lisuify::stake_pool {
     const EWrongAdminCap: u64 = 2007;
     const ENotEnoughSuiToWithdraw: u64 = 2008;
     const EForcedUstakeCapped: u64 = 2009;
+    const ETooBigFlashLoan: u64 = 2010;
+    const EWrongFlashLoan: u64 = 2011;
+    const EWrongRepayAmount: u64 = 2012;
+    const EBpcOverflow: u64 = 2013;
+    const ETooBigFreshDepositFee: u64 = 2014;
+    const ETooBigWithdrawFee: u64 = 2015;
+    const ETooBigRewardsFee: u64 = 2016;
 
     /// StakedSui objects cannot be split to below this amount.
     const MIN_STAKING_THRESHOLD: u64 = 1_000_000_000; // 1 SUI
@@ -52,6 +59,7 @@ module lisuify::stake_pool {
         rewards_fee_bpc: u32,
         keeping_reserve_ms: u64,
         max_forced_unstake_bpc: u32,
+        max_flash_loan_bpc: u32,
         last_update_epoch: u64,
         last_update_sui_balance: u64,
         last_update_token_supply: u64,
@@ -61,6 +69,7 @@ module lisuify::stake_pool {
         staking_validator: Option<address>,
         validators: vector<ValidatorEntry<C>>,
         reserve: Balance<SUI>,
+        total_flash_loan: u64,
     }
 
     struct AdminCap<phantom C> has key, store {
@@ -95,6 +104,7 @@ module lisuify::stake_pool {
             rewards_fee_bpc: 50000,
             keeping_reserve_ms: ONE_DAY_MS - 10 * ONE_MINUTE_MS,
             max_forced_unstake_bpc: 100000,
+            max_flash_loan_bpc: 0,
             last_update_epoch: tx_context::epoch(ctx),
             last_update_sui_balance: 0,
             last_update_token_supply: 0,
@@ -104,6 +114,7 @@ module lisuify::stake_pool {
             staking_validator: option::none(),
             validators: vector::empty(),
             reserve: balance::zero(),
+            total_flash_loan: 0,
         };
         
         transfer::share_object(stake_pool);
@@ -1085,6 +1096,46 @@ module lisuify::stake_pool {
         )
     }
 
+    public fun current_token_supply<C>(self: &StakePool<C>): u64 {
+        coin::total_supply(&self.treasury)
+    }
+
+    public fun last_update_epoch<C>(self: &StakePool<C>): u64 {
+        self.last_update_epoch
+    }
+
+    public fun last_update_sui_balance<C>(self: &StakePool<C>): u64 {
+        self.last_update_sui_balance
+    }
+
+    public fun last_update_token_supply<C>(self: &StakePool<C>): u64 {
+        self.last_update_token_supply
+    }
+
+    public fun current_sui_balance<C>(self: &StakePool<C>): u64 {
+        self.current_sui_balance
+    }
+
+    public fun current_forced_ustake<C>(self: &StakePool<C>): u64 {
+        self.current_forced_ustake
+    }
+
+    public fun reserve_balance<C>(self: &StakePool<C>): u64 {
+        balance::value(&self.reserve)
+    }
+
+    public fun total_flash_loan<C>(self: &StakePool<C>): u64 {
+        self.total_flash_loan
+    }
+
+    public fun validator_count<C>(self: &StakePool<C>): u64 {
+        vector::length(&self.validators)
+    }
+
+    public fun borrow_validator<C>(self: &StakePool<C>, i: u64): &ValidatorEntry<C> {
+        vector::borrow(&self.validators, i)
+    }
+
     public fun fresh_deposit_fee_bpc<C>(self: &StakePool<C>): u32 {
         self.fresh_deposit_fee_bpc
     }
@@ -1099,6 +1150,8 @@ module lisuify::stake_pool {
         fresh_deposit_fee_bpc: u32,
         admin_cap: &AdminCap<C>
     ) {
+        assert!(fresh_deposit_fee_bpc <= MAX_BPC, EBpcOverflow);
+        assert!(fresh_deposit_fee_bpc <= 300, ETooBigFreshDepositFee);
         assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
         self.fresh_deposit_fee_bpc = fresh_deposit_fee_bpc;
         event::emit(FreshDepositFeeBpcSet {
@@ -1121,6 +1174,8 @@ module lisuify::stake_pool {
         withdraw_fee_bpc: u32,
         admin_cap: &AdminCap<C>
     ) {
+        assert!(withdraw_fee_bpc <= MAX_BPC, EBpcOverflow);
+        assert!(withdraw_fee_bpc <= 50000, ETooBigWithdrawFee);
         assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
         self.withdraw_fee_bpc = withdraw_fee_bpc;
         event::emit(WithdrawFeeBpcSet {
@@ -1143,6 +1198,8 @@ module lisuify::stake_pool {
         rewards_fee_bpc: u32,
         admin_cap: &AdminCap<C>
     ) {
+        assert!(rewards_fee_bpc <= MAX_BPC, EBpcOverflow);
+        assert!(rewards_fee_bpc <= 100000, ETooBigRewardsFee);
         assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
         self.rewards_fee_bpc = rewards_fee_bpc;
         event::emit(RewardsFeeBpcSet {
@@ -1187,11 +1244,82 @@ module lisuify::stake_pool {
         max_forced_unstake_bpc: u32,
         admin_cap: &AdminCap<C>
     ) {
+        assert!(max_forced_unstake_bpc <= MAX_BPC, EBpcOverflow);
         assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
         self.max_forced_unstake_bpc = max_forced_unstake_bpc;
         event::emit(MaxForcedUnstakeBpcSet {
             stake_pool_id: object::id(self),
             max_forced_unstake_bpc,
         })
+    }
+
+    public fun max_flash_loan_bpc<C>(self: &StakePool<C>): u32 {
+        self.max_flash_loan_bpc
+    }
+
+    struct MaxFlashLoanBpcSet has copy, drop {
+        stake_pool_id: ID,
+        max_flash_loan_bpc: u32,
+    }
+
+    public entry fun set_max_flash_loan_bpc<C>(
+        self: &mut StakePool<C>,
+        max_flash_loan_bpc: u32,
+        admin_cap: &AdminCap<C>
+    ) {
+        assert!(max_flash_loan_bpc <= MAX_BPC, EBpcOverflow);
+        assert!(object::id(admin_cap) == self.admin_cap_id, EWrongAdminCap);
+        self.max_flash_loan_bpc = max_flash_loan_bpc;
+        event::emit(MaxFlashLoanBpcSet {
+            stake_pool_id: object::id(self),
+            max_flash_loan_bpc,
+        })
+    }
+
+    struct FlashLoan {
+        stake_pool_id: ID,
+        amount: u64,
+    }
+
+    public fun lend<C>(
+        self: &mut StakePool<C>,
+        amount: u64
+    ): (FlashLoan, Balance<C>) {
+        let max_amount = ((((coin::total_supply(&self.treasury) - self.total_flash_loan) as u128)
+            * (self.max_flash_loan_bpc as u128)
+            / (MAX_BPC as u128)) as u64);
+        assert!(
+            self.total_flash_loan + amount <= max_amount,
+            ETooBigFlashLoan,
+        );
+        let loan = FlashLoan {
+            stake_pool_id: object::id(self),
+            amount,
+        };
+        let tokens = coin::mint_balance(&mut self.treasury, amount);
+        self.total_flash_loan = self.total_flash_loan + amount;
+        (loan, tokens)
+    }
+
+    public fun repay<C>(
+        self: &mut StakePool<C>,
+        loan: FlashLoan,
+        tokens: Balance<C>
+    ) {
+        let FlashLoan {
+            stake_pool_id,
+            amount
+        } = loan;
+        assert!(
+            stake_pool_id == object::id(self),
+            EWrongFlashLoan
+        );
+        assert!(
+            balance::value(&tokens) == amount,
+            EWrongRepayAmount
+        );
+        let supply = coin::supply_mut(&mut self.treasury);
+        balance::decrease_supply(supply, tokens);
+        self.total_flash_loan = self.total_flash_loan - amount;
     }
 }

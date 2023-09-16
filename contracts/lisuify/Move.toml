@@ -8,4 +8,4 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 SuiSystem = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-system", rev = "framework/testnet" }
 
 [addresses]
-lisuify = "0x0"
+lisuify = "0xfba1e14b15a4501d19374962d27b23af9dbdb6ea86fbb78c85f2c78d0957e500"

@@ -11,6 +11,7 @@ export const execute = async (txb: TransactionBlock) => {
     transactionBlock: txBytes,
   });
   if (s.effects.status.status === 'failure') {
+    console.log(s.effects.status.error);
     throw new Error(s.effects.status.error);
   }
   if (context.dry) {

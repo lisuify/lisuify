@@ -187,11 +187,11 @@ module lisuify::validator_entry {
         self.last_update_sui_balance
     }
 
-    public(friend) fun validator_pool_id<C>(self: &ValidatorEntry<C>): ID {
+    public fun validator_pool_id<C>(self: &ValidatorEntry<C>): ID {
         self.validator_pool_id
     }
 
-    public(friend) fun validator_address<C>(self: &ValidatorEntry<C>): address {
+    public fun validator_address<C>(self: &ValidatorEntry<C>): address {
         self.validator_address
     }
 
@@ -451,12 +451,22 @@ module lisuify::validator_entry {
         result
     }
 
-    public(friend) fun last_update_sui_balance<C>(self: &ValidatorEntry<C>): u64 {
+    public fun last_update_sui_balance<C>(self: &ValidatorEntry<C>): u64 {
         self.last_update_sui_balance
     }
 
-    public(friend) fun is_active<C>(self: &ValidatorEntry<C>): bool {
+    public fun is_active<C>(self: &ValidatorEntry<C>): bool {
         self.is_active
+    }
+
+    public fun current_pool_tokens<C>(self: &ValidatorEntry<C>): u64 {
+        self.current_pool_tokens
+    }
+    public fun current_fresh_sui_balance<C>(self: &ValidatorEntry<C>): u64 {
+        self.current_fresh_sui_balance
+    }
+    public fun last_update_epoch<C>(self: &ValidatorEntry<C>): u64 {
+        self.last_update_epoch
     }
 
     public(friend) fun set_is_active<C>(

@@ -8,6 +8,11 @@ export const installUpdate = (program: Command) => {
 };
 
 const update = async () => {
+  const state = await context.provider.getLatestSuiSystemState();
+  // eslint-disable-next-line node/no-unsupported-features/es-builtins
+  if (BigInt(state.epoch) === context.stakePool.lastUpdateEpoch) {
+    return;
+  }
   const txb = new TransactionBlock();
   context.stakePool.update({
     // provider: context.provider,

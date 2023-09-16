@@ -16,6 +16,7 @@ import {StakePoolUpdate} from './StakePoolUpdate';
 import {depositSui} from '../transactionBuilder/depositSui';
 import {withdraw} from '../transactionBuilder/withdraw';
 import {update} from '../transactionBuilder/update';
+import {stakeReserve} from '../transactionBuilder/stakeReserve';
 
 export class StakePool {
   private constructor(
@@ -301,5 +302,27 @@ export class StakePool {
 
   async update({txb}: {txb: TransactionBlock}) {
     update({lisuifyId: this.lisuifyId, poolId: this.id, txb});
+  }
+
+  stakeReserve({
+    txb,
+    validatorAddress,
+  }: {
+    txb: TransactionBlock;
+    validatorAddress?: string;
+  }) {
+    if (!validatorAddress) {
+      if (!this.stakingValidator) {
+        throw new Error('Validator address is required');
+      }
+      validatorAddress = this.stakingValidator;
+    }
+
+    stakeReserve({
+      lisuifyId: this.lisuifyId,
+      poolId: this.id,
+      validatorAddress,
+      txb,
+    });
   }
 }

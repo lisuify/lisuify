@@ -6,6 +6,8 @@ import {installSetStakingdValidator} from './setStakingValidator';
 import {installUpdate} from './update';
 import {installDepositSui} from './depositSui';
 import {installWithdraw} from './withdraw';
+import {installAirdrop} from './airdrop';
+import {installStakeReserve} from './stakeReserve';
 
 export const installCommands = (program: Command) => {
   installShowStakePool(program);
@@ -15,4 +17,7 @@ export const installCommands = (program: Command) => {
   installUpdate(program);
   installDepositSui(program);
   installWithdraw(program);
+  installStakeReserve(program);
+
+  installAirdrop(program);
 };
