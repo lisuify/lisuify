@@ -17,6 +17,10 @@ export const swapOnCetusLink =
   import.meta.env.SWAP_ON_CETUS_LINK ||
   "https://cetus-trade-testnet.netlify.app/swap?from=0x2::sui::SUI&to=0xfba1e14b15a4501d19374962d27b23af9dbdb6ea86fbb78c85f2c78d0957e500::coin::COIN";
 
+export const provideLiquidityOnCetus =
+  import.meta.env.PUBLIC_PROVIDE_LIQUIDITY_ON_CETUS_LINK ||
+  "https://cetus-trade-testnet.netlify.app/liquidity/deposit/?poolAddress=0x7f175587e228d22fa2fd4d7d42b46b5a60a3730b4b442efc2bf1dfd8eaacf685";
+
 export const SIDE_MENU = {
   "Getting Started": [
     "/docs/getting-started/what-is-lisuify",
@@ -29,6 +33,7 @@ export const SIDE_MENU = {
 export const NAVIGATION_MENU = {
   Defi: {
     "Swap on Cetus": swapOnCetusLink,
+    "Provide Liquidity": provideLiquidityOnCetus,
   },
   "Getting Started": {
     "What is LiSuify?": "/docs/getting-started/what-is-lisuify",

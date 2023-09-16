@@ -93,7 +93,7 @@ export const getWalletBalances = async () => {
     .then((wallets) => {
       walletStateAtom.set({
         wallets: wallets,
-        walletIdx: 0,
+        walletIdx: walletStateAtom.get().walletIdx,
       });
 
       loadingWalletDataAtom.set(false);
