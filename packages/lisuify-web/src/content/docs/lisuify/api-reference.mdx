@@ -1,4 +1,6 @@
-# Lisuify Liquid Staking Contract API Reference
+---
+title: Liquid Staking Contract API Reference
+---
 
 This documentation outlines the structure and functionality of the liquid staking contract implemented in the Move programming language for the SUI blockchain. The contract is divided into three modules: `coin.move`, `validator_entry.move`, and `stake_pool.move`.
 
@@ -42,32 +44,33 @@ This module contains the core functionalities of the staking pool. It includes s
 
    A generic structure parameterized by the coin type, holding various properties related to the stake pool, including treasury capabilities, fees, balances, and validator information.
 
-  - Fields:
-    - `id`: A unique identifier for the stake pool.
-    - `admin_cap_id`: ID for admin capabilities.
-    - `validator_manager_cap_id`: ID for validator manager capabilities.
-    - `treasury`: A capability to mint and burn a liquid staking token.
-    - `fees`: A collection of fees in SUI, which can be withdrawn by the admin.
-    - `fresh_deposit_fee_bpc`: Fee for fresh deposits, replacing the next epoch rate prediction (basis point cents).
-    - `withdraw_fee_bpc`: Withdrawal fee (basis point cents).
-    - `rewards_fee_bpc`: Rewards fee (basis point cents).
-    - `keeping_reserve_ms`: Time in milliseconds to keep the reserve.
-    - `max_forced_unstake_bpc`: The limit to the amount the validator manager may forcibly withdraw to the reserve during a single epoch (basis point cents).
-    - `last_update_epoch`: The last epoch when the pool was updated.
-    - `last_update_sui_balance`: The last updated SUI balance.
-    - `last_update_token_supply`: The last updated token supply.
-    - `current_sui_balance`: The current SUI balance.
-    - `current_forced_ustake`: The current forced unstake amount.
-    - `update`: An optional field that may contain the state of the current update process, which can be split into multiple transactions by setting the `max_validators` parameter in the update function.
-    - `staking_validator`: Used for permissionless staking in the stake-reserve time window at the end of the epoch (starting from epoch start + `keeping_reserve_ms`).
-    - `validators`: Vector of validator entries.
-    - `reserve`: A collection of SUI coins gathered to be staked in the last minutes of the epoch, allowing it to be available for withdrawals during the epoch. If staked immediately, it would not be possible to withdraw the fresh stake until the next epoch.
+- Fields:
+  - `id`: A unique identifier for the stake pool.
+  - `admin_cap_id`: ID for admin capabilities.
+  - `validator_manager_cap_id`: ID for validator manager capabilities.
+  - `treasury`: A capability to mint and burn a liquid staking token.
+  - `fees`: A collection of fees in SUI, which can be withdrawn by the admin.
+  - `fresh_deposit_fee_bpc`: Fee for fresh deposits, replacing the next epoch rate prediction (basis point cents).
+  - `withdraw_fee_bpc`: Withdrawal fee (basis point cents).
+  - `rewards_fee_bpc`: Rewards fee (basis point cents).
+  - `keeping_reserve_ms`: Time in milliseconds to keep the reserve.
+  - `max_forced_unstake_bpc`: The limit to the amount the validator manager may forcibly withdraw to the reserve during a single epoch (basis point cents).
+  - `last_update_epoch`: The last epoch when the pool was updated.
+  - `last_update_sui_balance`: The last updated SUI balance.
+  - `last_update_token_supply`: The last updated token supply.
+  - `current_sui_balance`: The current SUI balance.
+  - `current_forced_ustake`: The current forced unstake amount.
+  - `update`: An optional field that may contain the state of the current update process, which can be split into multiple transactions by setting the `max_validators` parameter in the update function.
+  - `staking_validator`: Used for permissionless staking in the stake-reserve time window at the end of the epoch (starting from epoch start + `keeping_reserve_ms`).
+  - `validators`: Vector of validator entries.
+  - `reserve`: A collection of SUI coins gathered to be staked in the last minutes of the epoch, allowing it to be available for withdrawals during the epoch. If staked immediately, it would not be possible to withdraw the fresh stake until the next epoch.
 
 2. **AdminCap**
 
    A structure that holds administrative capabilities.
 
    Fields:
+
    - `id`: Unique identifier.
 
 3. **ValidatorManagerCap**
@@ -75,6 +78,7 @@ This module contains the core functionalities of the staking pool. It includes s
    A structure that holds validator manager capabilities.
 
    Fields:
+
    - `id`: Unique identifier.
 
 #### Functions
@@ -84,7 +88,7 @@ The `stake_pool.move` module contains several public functions to manage the sta
 ##### Public Entry Functions
 
 1. **add_validator**
-   
+
    Adds a validator to the stake pool.
 
    - Parameters:
@@ -170,26 +174,26 @@ The `stake_pool.move` module contains several public functions to manage the sta
      - `amount`: The amount of stake to be reserved.
      - `cap`: A reference to the ValidatorManagerCap instance, ensuring the caller has the necessary permissions.
 
-14. **stake_reserve**
+10. **stake_reserve**
 
-   Stakes reserve in the stake pool. This function can only be called after `keeping_reserve_ms` from the start of the epoch and requires the use of `staking_validator` as `validator_address` if it is set.
+Stakes reserve in the stake pool. This function can only be called after `keeping_reserve_ms` from the start of the epoch and requires the use of `staking_validator` as `validator_address` if it is set.
 
-   - Parameters:
-     - `self`: A reference to the StakePool instance.
-     - `sui_system`: A mutable reference to the SUI system state.
-     - `clock`: A reference to the system clock to determine the current time.
-     - `validator_address`: The address of the validator where the reserve is to be staked.
+- Parameters:
+  - `self`: A reference to the StakePool instance.
+  - `sui_system`: A mutable reference to the SUI system state.
+  - `clock`: A reference to the system clock to determine the current time.
+  - `validator_address`: The address of the validator where the reserve is to be staked.
 
 15. **forced_unstake**
 
-   Forces an unstake in the stake pool, limited by `max_forced_unstake_bpc` of `current_sui_balance`.
-    
-   - Parameters:
-     - `self`: A reference to the StakePool instance.
-     - `sui_system`: A mutable reference to the SUI system state.
-     - `validator_pool_id`: The ID of the validator pool where the unstake is to be forced.
-     - `amount`: The amount to be forcibly unstaked.
-     - `cap`: A reference to the ValidatorManagerCap instance, ensuring the caller has the necessary permissions.
+Forces an unstake in the stake pool, limited by `max_forced_unstake_bpc` of `current_sui_balance`.
+
+- Parameters:
+  - `self`: A reference to the StakePool instance.
+  - `sui_system`: A mutable reference to the SUI system state.
+  - `validator_pool_id`: The ID of the validator pool where the unstake is to be forced.
+  - `amount`: The amount to be forcibly unstaked.
+  - `cap`: A reference to the ValidatorManagerCap instance, ensuring the caller has the necessary permissions.
 
 ##### Public Functions
 
@@ -221,7 +225,6 @@ The `stake_pool.move` module contains several public functions to manage the sta
      - `self`: A reference to the StakePool instance.
      - `sui_system`: A mutable reference to the SUI system state.
      - `token_balance`: The balance of the token to be withdrawn.
-
 
 ## Conclusion
 

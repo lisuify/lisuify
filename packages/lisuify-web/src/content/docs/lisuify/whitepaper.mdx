@@ -1,7 +1,6 @@
 ---
-title: The Lisuify Staking Pool Whitepaper
+title: Staking Pool Whitepaper
 ---
-import { InlineMath } from 'react-katex';
 
 ## Introduction
 
@@ -17,9 +16,8 @@ Delving deeper into the staking implementation, it's noteworthy that the system 
 
 A distinctive feature of the Lisuify Staking Pool is its reserve system, which collects deposits until the end of the epoch. This strategy ensures that the deposited assets remain available for withdrawals during the ongoing epoch, enhancing the liquidity and flexibility of the staking process.
 
-### Note:
-- **Stakes Created in the Current Epoch**: Stakes created during the current epoch may not be withdrawn immediately to prevent potential liquidity issues. To mitigate the likelihood of insufficient funds for withdrawals, the system postpones the staking process until the final moments of the epoch. However, in urgent scenarios, users have the option to withdraw in the form of stakes.
-- **Fresh Stakes Depositing**: In the production version of the system, depositing fresh stakes during the epoch will be restricted to maintain stability and security. Currently, this feature is enabled for demonstration purposes.
+> - **Stakes Created in the Current Epoch**: Stakes created during the current epoch may not be withdrawn immediately to prevent potential liquidity issues. To mitigate the likelihood of insufficient funds for withdrawals, the system postpones the staking process until the final moments of the epoch. However, in urgent scenarios, users have the option to withdraw in the form of stakes.
+> - **Fresh Stakes Depositing**: In the production version of the system, depositing fresh stakes during the epoch will be restricted to maintain stability and security. Currently, this feature is enabled for demonstration purposes.
 
 ## liSUI Token Pricing
 
@@ -35,8 +33,7 @@ This ratio is updated once per epoch during the finalization of the update proce
 
 At the onset of each new epoch, an update process is initiated. This process is permissionless, allowing any participant to execute it. Due to potential limitations on transaction size, especially with a large number of validators, this update can be executed in multiple steps. It is imperative to complete this update before any operations in the new epoch can commence, as utilizing an outdated liSUI price can jeopardize the system's stability.
 
-### Note:
-- **Last-Minute SUI Deposits**: In the final moments of an epoch, any SUI deposits are automatically staked to ensure the creation of stakes within the same epoch. This strategy aims to expedite the reward accumulation process, allowing users to start gathering rewards as soon as possible.
+>- **Last-Minute SUI Deposits**: In the final moments of an epoch, any SUI deposits are automatically staked to ensure the creation of stakes within the same epoch. This strategy aims to expedite the reward accumulation process, allowing users to start gathering rewards as soon as possible.
 
 ## Strategic Staking of Reserved Funds at Epoch End
 

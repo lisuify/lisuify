@@ -89,22 +89,22 @@ const { title, headings } = Astro.props;
         {
           headings.map((heading) => {
             let Heading: any = `h${heading.depth}`;
-            let className = `peer border-l-2 border-l-natural `;
+            let className = `peer border-l-2 border-l-neutral `;
             switch (heading.depth) {
               case 2:
-                className += `pl-2`;
-                break;
-              case 3:
                 className += `pl-4`;
                 break;
-              case 4:
-                className += `pl-6`;
-                break;
-              case 5:
+              case 3:
                 className += `pl-8`;
                 break;
+              case 4:
+                className += `pl-12`;
+                break;
+              case 5:
+                className += `pl-16`;
+                break;
               case 6:
-                className += `pl-10`;
+                className += `pl-20`;
                 break;
               default:
                 break;
