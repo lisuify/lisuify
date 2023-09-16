@@ -2,7 +2,17 @@
 
 [LiSuify](https://lisuify.com/) is a liquid staking platform for the SUI protocol, enabling users to stake their SUI or [StakedSui object](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-stakedsui) to wrap with a liquid token name [liSUI](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-lisui) return to the user. The staked SUI tokens are delegated across multiple validators to contributing to the SUI protocol's Proof-of-Stake (PoS) consensus mechanism and earning staking rewards.
 
-## Project Structure
+## LiSuify packages
+
+[LiSuify Smart Contract](/contracts/lisuify) - LiSuify smart contracts
+
+[lisuify-web](/packages/lisuify-web) - LiSuify Web
+
+[lisuify-sdk](/packages/lisuify-sdk) - LiSuify SDK
+
+[lisuify-cli](/packages/lisuify-cli) - LiSuify command line interface
+
+### Project Structure
 
 ```tree
 .
@@ -13,6 +23,14 @@
     ├── lisuify-sdk         - LiSuify SDK
     └── lisuify-web         - LiSuify Web
 ```
+
+## Documents
+
+[What is LiSuify?](https://lisuify.com/docs/getting-started/what-is-lisuify/)
+
+[Staking Pool Whitepaper](https://lisuify.com/docs/lisuify/whitepaper/)
+
+[Liquid Staking Contract API Reference](https://lisuify.com/docs/lisuify/api-reference/)
 
 ## Development
 
@@ -25,11 +43,3 @@ developer need to install [pnpm](https://pnpm.io/) to use [pnpm workspace](https
 ### Install packages
 
 `pnpm install`
-
-### LiSuify packages
-
-[lisuify-web](/packages/lisuify-web) - LiSuify Web
-
-[lisuify-sdk](/packages/lisuify-sdk) - LiSuify SDK
-
-[lisuify-cli](/packages/lisuify-cli) - LiSuify command line interface
