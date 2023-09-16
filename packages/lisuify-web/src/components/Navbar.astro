@@ -43,9 +43,14 @@ const { isWallet } = Astro.props;
                       <div>{title1}</div>
                       <ul class="p-2">
                         {Object.entries(val1).map(([title2, link]) => {
+                          const target = link.startsWith("http")
+                            ? "_blank"
+                            : "_self";
                           return (
                             <li>
-                              <a href={link}>{title2}</a>
+                              <a href={link} target={target}>
+                                {title2}
+                              </a>
                             </li>
                           );
                         })}
@@ -85,9 +90,14 @@ const { isWallet } = Astro.props;
                     class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
                   >
                     {Object.entries(val1).map(([title2, link]) => {
+                      const target = link.startsWith("http")
+                        ? "_blank"
+                        : "_self";
                       return (
                         <li>
-                          <a href={link}>{title2}</a>
+                          <a href={link} target={target}>
+                            {title2}
+                          </a>
                         </li>
                       );
                     })}

@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly PUBLIC_ORIGINAL_LISUIFY_ID: string;
   readonly PUBLIC_LISUIFY_ID: string;
   readonly PUBLIC_STAKE_POOL_ID: string;
+  readonly PUBLIC_SWAP_ON_CETUS_LINK: string;
 }
 
 interface ImportMeta {
