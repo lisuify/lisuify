@@ -1,6 +1,6 @@
 # LiSuify
 
-[LiSuify](https://lisuify.com/) is a liquid staking platform for the SUI protocol, enabling users to stake their SUI or [StakedSui object](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-stakedsui) to wrap with a liquid token name [liSUI](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-lisui) return to user. The staked SUI tokens are delegated across multiple validators to earning staking rewards.
+[LiSuify](https://lisuify.com/) is a liquid staking platform for the SUI protocol, enabling users to stake their SUI or [StakedSui object](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-stakedsui) to wrap with a liquid token name [liSUI](https://lisuify.com/docs/getting-started/what-is-lisuify/#what-is-lisui) return to the user. The staked SUI tokens are delegated across multiple validators to contributing to the SUI protocol's Proof-of-Stake (PoS) consensus mechanism and earning staking rewards.
 
 ## Project Structure
 
