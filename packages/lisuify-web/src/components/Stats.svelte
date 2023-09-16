@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { loadingStatsAtom } from "../stores/loadingStore";
   import { statsAtom } from "../stores/statsStore";
   import { round, suiToNumber, suiToString } from "../utils";
   import Info from "./icons/Info.svelte";
 </script>
 
 <div
-  class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg {$loadingStatsAtom &&
+  class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg {$statsAtom.loading &&
     'animate-pulse blur-sm'}"
 >
   <div class="stat">
