@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{astro,html,js,svelte,ts,svx,md}"],
+  content: ["./src/**/*.{astro,html,js,svelte,ts,svx,md,mdx}"],
   safelist: ["alert-info", "alert-success", "alert-error"],
   theme: {
     extend: {},
