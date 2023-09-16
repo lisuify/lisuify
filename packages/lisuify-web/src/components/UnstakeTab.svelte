@@ -73,7 +73,7 @@
         resp.balanceChanges.forEach((balance) => {
           if (balance.coinType === SUI_TYPE_ARG) {
             suiBalanceChange = BigInt(balance.amount);
-            liSuiRatio = Number(suiBalanceChange) / Number(liSuiAmountBigint);
+            const liSuiRatio = Number(suiBalanceChange) / Number(liSuiAmountBigint);
           }
         });
         loadingSimulateTx = false;
