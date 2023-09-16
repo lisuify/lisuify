@@ -60,8 +60,14 @@ const { isWallet } = Astro.props;
       }
     }
     <SunMoon />
-    <div class="text-xl font-bold">LiSuify</div>
-    <div class="text-sm ml-2 font-thin capitalize">{network}</div>
+    <a class="text-3xl font-bold" href="/">LiSuify</a>
+    {
+      () => {
+        if (isWallet) {
+          return <div class="text-sm ml-2 font-thin capitalize">{network}</div>;
+        }
+      }
+    }
   </div>
   {
     () => {
@@ -94,18 +100,22 @@ const { isWallet } = Astro.props;
       }
     }
   }
-  <div class="navbar-end justify-center md:justify-end w-screen lg:w-1/2">
-    {
-      () => {
-        if (isWallet) {
-          return <ConnectWalletDropdown client:only />;
-        }
+  {
+    () => {
+      if (isWallet) {
         return (
+          <div class="navbar-end justify-center md:justify-end w-screen lg:w-1/2">
+            <ConnectWalletDropdown client:only />
+          </div>
+        );
+      }
+      return (
+        <div class="navbar-end hidden md:flex justify-end w-1/2">
           <a class="btn btn-primary" href="/">
             Go to App
           </a>
-        );
-      }
+        </div>
+      );
     }
-  </div>
+  }
 </div>
