@@ -3,7 +3,7 @@ import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon";
 import { getCollection } from "astro:content";
 import MainLayout from "./main.astro";
-import { SIDE_MENU } from "../consts";
+import { SIDE_MENU, pageDescription } from "../consts";
 
 interface Props {
   title: string;
@@ -13,9 +13,16 @@ interface Props {
 const docs = await getCollection("docs");
 
 const { title, headings } = Astro.props;
+
+let description = pageDescription;
+headings.forEach((head) => {
+  if (head.slug == "description") {
+    description = head.text;
+  }
+});
 ---
 
-<MainLayout title={title} description="" isWallet={false}>
+<MainLayout title={title} description={description} isWallet={false}>
   <main class="grid grid-cols-12">
     <aside
       id="docs_nav"

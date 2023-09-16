@@ -1,6 +1,6 @@
 export const pageTitle = "LiSuify";
 
-export const pageDescription = "Stake SUI for the best profit";
+export const pageDescription = "A liquid staking for SUI protocal";
 
 export const githubLink = "https://github.com/lisuify/lisuify";
 
