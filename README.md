@@ -17,11 +17,12 @@
 ```tree
 .
 ├── contracts
-│   └── lisuify             - LiSuify smart contracts
+│   ├── lisuify              - LiSuify smart contract
+│   └── LisuiCetusArbitrager - Cetus integration contract
 └── packages
-    ├── lisuify-cli         - LiSuify command line interface
-    ├── lisuify-sdk         - LiSuify SDK
-    └── lisuify-web         - LiSuify Web
+    ├── lisuify-cli          - LiSuify command line interface
+    ├── lisuify-sdk          - LiSuify SDK
+    └── lisuify-web          - LiSuify Web
 ```
 
 ## Documents
@@ -31,6 +32,7 @@
 [Staking Pool Whitepaper](https://lisuify.com/docs/lisuify/whitepaper/)
 
 [Liquid Staking Contract API Reference](https://lisuify.com/docs/lisuify/api-reference/)
+[Cetus Integartion Plans](https://lisuify.com/docs/lisuify/cetus-integration/)
 
 ## Development
 
