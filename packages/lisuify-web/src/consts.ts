@@ -27,7 +27,11 @@ export const SIDE_MENU = {
     "/docs/getting-started/liquid-staking",
     // "/docs/getting-started/faq",
   ],
-  LiSuify: ["/docs/lisuify/whitepaper", "/docs/lisuify/api-reference"],
+  LiSuify: [
+    "/docs/lisuify/whitepaper",
+    "/docs/lisuify/api-reference",
+    "/docs/lisuify/cetus-integration",
+  ],
 };
 
 export const NAVIGATION_MENU = {
@@ -43,6 +47,6 @@ export const NAVIGATION_MENU = {
   Documents: {
     Whitepaper: "/docs/lisuify/whitepaper",
     "API Reference": "/docs/lisuify/api-reference",
-    "Cetus Integration": "/docs/lisuify/cetus-integration"
+    "Cetus Integration": "/docs/lisuify/cetus-integration",
   },
 };
