@@ -43,5 +43,6 @@ export const NAVIGATION_MENU = {
   Documents: {
     Whitepaper: "/docs/lisuify/whitepaper",
     "API Reference": "/docs/lisuify/api-reference",
+    "Cetus Integration": "/docs/lisuify/cetus-integration"
   },
 };
