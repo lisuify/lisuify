@@ -383,9 +383,6 @@ module lisuify::validator_entry {
             ctx
         );
         while (i < count && max_amount > 0) {
-            if (max_amount < MIN_STAKING_THRESHOLD) {
-                max_amount = MIN_STAKING_THRESHOLD;
-            };
             let stake_activation_epoch = *vector::borrow(&self.stake_activation_epochs, i);
             if (stake_activation_epoch == epoch + 1) {
                 // skip fresh stake
@@ -415,9 +412,17 @@ module lisuify::validator_entry {
                 &exchange_rate_at_staking_epoch,
                 split_request_pool_tokens
             );
+            if (split_request < MIN_STAKING_THRESHOLD) {
+                split_request = MIN_STAKING_THRESHOLD;
+            };
             while (get_pool_token_amount(&exchange_rate_at_staking_epoch, split_request) < split_request_pool_tokens) {
                 split_request = split_request + 1;
             };
+            // recalc split request pool tokens
+            split_request_pool_tokens = get_pool_token_amount(
+                &exchange_rate,
+                split_request,
+            );
             let source_stake = if (principal >= split_request + MIN_STAKING_THRESHOLD) {
                 self.current_pool_tokens = self.current_pool_tokens -  split_request_pool_tokens;
                 i = i + 1;
