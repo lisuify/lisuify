@@ -1,12 +1,12 @@
 [package]
 name = "LisuiCetusArbitrager"
 version = "0.0.1"
+published-at = "0xb224dfa52827f4f2bebe8f77c46954f62611131be22d50a8ca642feffd75768b"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 lisuify = { local = "../lisuify" }
 CetusClmm = { git = "https://github.com/lisuify/cetus-clmm-interface.git", subdir = "sui/clmmpool", rev = "fix/testnet" }
-IntegerMate = { git = "https://github.com/lisuify/integer-mate.git", subdir = "sui", rev = "fix/testnet" }
 
 [addresses]
 lisui_cetus_arbitrager = "0x0"
