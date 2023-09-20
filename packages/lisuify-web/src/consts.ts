@@ -29,6 +29,7 @@ export const SIDE_MENU = {
   ],
   LiSuify: [
     "/docs/lisuify/whitepaper",
+    "/docs/lisuify/tokenomics",
     "/docs/lisuify/api-reference",
     "/docs/lisuify/cetus-integration",
   ],
@@ -46,6 +47,7 @@ export const NAVIGATION_MENU = {
   },
   Documents: {
     Whitepaper: "/docs/lisuify/whitepaper",
+    Tokenomics: "/docs/lisuify/tokenomics",
     "API Reference": "/docs/lisuify/api-reference",
     "Cetus Integration": "/docs/lisuify/cetus-integration",
   },

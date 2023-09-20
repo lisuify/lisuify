@@ -31,6 +31,8 @@
 
 [Staking Pool Whitepaper](https://lisuify.com/docs/lisuify/whitepaper/)
 
+[Tokenomics](https://lisuify.com/docs/lisuify/tokenomics/)
+
 [Liquid Staking Contract API Reference](https://lisuify.com/docs/lisuify/api-reference/)
 [Cetus Integartion Plans](https://lisuify.com/docs/lisuify/cetus-integration/)
 
