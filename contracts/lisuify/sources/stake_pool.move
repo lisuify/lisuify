@@ -59,7 +59,7 @@ module lisuify::stake_pool {
         rewards_fee_bpc: u32,
         keeping_reserve_ms: u64,
         max_forced_unstake_bpc: u32,
-        max_flash_loan_bpc: u32,
+        // max_flash_loan_bpc: u32,
         last_update_epoch: u64,
         last_update_sui_balance: u64,
         last_update_token_supply: u64,
@@ -69,7 +69,7 @@ module lisuify::stake_pool {
         staking_validator: Option<address>,
         validators: vector<ValidatorEntry<C>>,
         reserve: Balance<SUI>,
-        total_flash_loan: u64,
+        // total_flash_loan: u64,
     }
 
     struct AdminCap<phantom C> has key, store {
@@ -104,7 +104,7 @@ module lisuify::stake_pool {
             rewards_fee_bpc: 50000,
             keeping_reserve_ms: ONE_DAY_MS - 10 * ONE_MINUTE_MS,
             max_forced_unstake_bpc: 100000,
-            max_flash_loan_bpc: 0,
+            // max_flash_loan_bpc: 0,
             last_update_epoch: tx_context::epoch(ctx),
             last_update_sui_balance: 0,
             last_update_token_supply: 0,
@@ -114,7 +114,7 @@ module lisuify::stake_pool {
             staking_validator: option::none(),
             validators: vector::empty(),
             reserve: balance::zero(),
-            total_flash_loan: 0,
+            // total_flash_loan: 0,
         };
         
         transfer::share_object(stake_pool);
@@ -1123,10 +1123,11 @@ module lisuify::stake_pool {
     public fun reserve_balance<C>(self: &StakePool<C>): u64 {
         balance::value(&self.reserve)
     }
-
+    /*
     public fun total_flash_loan<C>(self: &StakePool<C>): u64 {
         self.total_flash_loan
     }
+    */
 
     public fun validator_count<C>(self: &StakePool<C>): u64 {
         vector::length(&self.validators)
@@ -1253,6 +1254,7 @@ module lisuify::stake_pool {
         })
     }
 
+    /*
     public fun max_flash_loan_bpc<C>(self: &StakePool<C>): u32 {
         self.max_flash_loan_bpc
     }
@@ -1322,4 +1324,5 @@ module lisuify::stake_pool {
         balance::decrease_supply(supply, tokens);
         self.total_flash_loan = self.total_flash_loan - amount;
     }
+    */
 }
