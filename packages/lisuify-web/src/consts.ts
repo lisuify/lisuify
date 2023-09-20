@@ -51,6 +51,6 @@ export const NAVIGATION_MENU = {
     Tokenomics: "/docs/lisuify/tokenomics",
     "API Reference": "/docs/lisuify/api-reference",
     "Cetus Integration": "/docs/lisuify/cetus-integration",
-    "Go-To-Market": "/docs/lisuify/go-to-market",
+    "Go To Market": "/docs/lisuify/go-to-market",
   },
 };
