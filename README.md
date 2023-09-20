@@ -37,7 +37,7 @@
 
 [Cetus Integartion Plans](https://lisuify.com/docs/lisuify/cetus-integration/)
 
-[CGo To Market Strategy](https://lisuify.com/docs/lisuify/go-to-market/)
+[Go To Market Strategy](https://lisuify.com/docs/lisuify/go-to-market/)
 
 ## Development
 
