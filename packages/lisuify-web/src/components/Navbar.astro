@@ -115,7 +115,7 @@ const { isWallet } = Astro.props;
       if (isWallet) {
         return (
           <div class="navbar-end justify-center md:justify-end w-screen lg:w-1/2">
-            <ConnectWalletDropdown client:only />
+            <ConnectWalletDropdown client:load />
           </div>
         );
       }
