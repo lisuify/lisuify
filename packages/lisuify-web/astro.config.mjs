@@ -15,7 +15,6 @@ export default defineConfig({
   adapter: cloudflare({
     mode: "directory",
     functionPerRoute: true,
-    runtime: "local",
   }),
   compressHTML: false,
   integrations: [mdx(), tailwind(), svelte(), serviceWorker(), robotsTxt()],
