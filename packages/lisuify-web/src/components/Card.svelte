@@ -13,8 +13,8 @@
 </script>
 
 <div
-  class="{$loadingWalletDataAtom &&
-    'animate-pulse blur-sm pointer-events-none'} w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded-lg border border-base-100 bg-base-100 relative"
+  class="w-full max-w-lg p-4 flex flex-col items-center gap-4 rounded-lg border border-base-100 bg-base-100 relative {$loadingWalletDataAtom &&
+    'animate-pulse blur-sm pointer-events-none'}"
 >
   {#if $walletStateAtom.wallets.length > 0}
     <button

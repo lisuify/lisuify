@@ -30,7 +30,7 @@ const stats: Stats = {
     class="container mx-auto flex flex-col justify-items-center items-center gap-4"
   >
     <StatsComponent stats={stats} />
-    <Card stats={stats} client:only />
-    <Toast client:only />
+    <Card stats={stats} client:load />
+    <Toast client:visible />
   </div>
 </MainLayout>
