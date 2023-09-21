@@ -5,6 +5,9 @@
   import ConnectWalletButton from "./ConnectWalletButton.svelte";
   import StakeTab from "./StakeTab.svelte";
   import UnstakeTab from "./UnstakeTab.svelte";
+  import type { Stats } from "../types";
+
+  export let stats: Stats;
 
   let isStake = true;
 </script>
@@ -58,7 +61,7 @@
           duration: 300,
         }}
       >
-        <StakeTab />
+        <StakeTab {stats} />
       </div>
     {:else}
       <div
@@ -67,7 +70,7 @@
           duration: 300,
         }}
       >
-        <UnstakeTab />
+        <UnstakeTab {stats} />
       </div>
     {/if}
   {:else}

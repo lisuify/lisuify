@@ -16,9 +16,11 @@
     liSuiCoinType,
   } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
-  import { statsAtom } from "../stores/statsStore";
   import type { TransactionBlock } from "@mysten/sui.js/transactions";
   import { SUI_DECIMALS } from "@mysten/sui.js/utils";
+  import type { Stats } from "../types";
+
+  export let stats: Stats;
 
   let selectingIndex = -1;
   let suiAmountBigint = BigInt(0);
@@ -26,7 +28,7 @@
   let suiAmountError = "";
   let stakedSuiAmountBigint = BigInt(0);
   let liSuiBalanceChange = BigInt(0);
-  let liSuiRatio = $statsAtom.liSuiRatio;
+  let liSuiRatio = stats.liSuiRatio;
   let txb: TransactionBlock;
   let loadingSimulateTx = false;
 
@@ -77,7 +79,8 @@
         resp.balanceChanges.forEach((balance) => {
           if (balance.coinType === liSuiCoinType) {
             liSuiBalanceChange = BigInt(balance.amount);
-            const liSuiRatio = Number(suiAmountBigint) / Number(liSuiBalanceChange);
+            const liSuiRatio =
+              Number(suiAmountBigint) / Number(liSuiBalanceChange);
           }
         });
         loadingSimulateTx = false;
@@ -356,7 +359,7 @@
 
   <div class="flex justify-between w-full">
     <div>APY</div>
-    <div>{round($statsAtom.validatorApy, 2)} %</div>
+    <div>{round(stats.averageApy, 2)} %</div>
   </div>
 </div>
 
