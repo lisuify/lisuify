@@ -1,7 +1,7 @@
 {
-    "name": "Astro Svelte Tailwind",
-    "short_name": "Astro Svelte Tailwind",
-    "description": "Astro Starter Template with Svelte, Tailwind, Daisyui, and Service Worker",
+    "name": "LiSuify",
+    "short_name": "LiSuify",
+    "description": "A liquid staking platform for SUI Protocal",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#fff",

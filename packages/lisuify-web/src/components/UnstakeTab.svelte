@@ -15,19 +15,21 @@
   } from "../client/lisuify";
   import { addToastMessage } from "../stores/toastStore";
   import type { TransactionBlock } from "@mysten/sui.js/transactions";
-  import { statsAtom } from "../stores/statsStore";
   import { SUI_DECIMALS, SUI_TYPE_ARG } from "@mysten/sui.js/utils";
+  import type { Stats } from "../types";
+
+  export let stats: Stats;
 
   let liSuiAmountBigint = BigInt(0);
   let liSuiAmount = "";
   let liSuiAmountError = "";
   let suiBalanceChange = BigInt(0);
-  let liSuiRatio = $statsAtom.liSuiRatio;
+  let liSuiRatio = stats.liSuiRatio;
   let txb: TransactionBlock;
   let loadingSimulateTx = false;
 
   // use to trigger when stop typing for 1 second
-  let inputTimeout: NodeJS.Timeout;
+  let inputTimeout: number;
   const onInput = (target: string) => {
     clearTimeout(inputTimeout);
     inputTimeout = setTimeout(function () {
@@ -73,7 +75,8 @@
         resp.balanceChanges.forEach((balance) => {
           if (balance.coinType === SUI_TYPE_ARG) {
             suiBalanceChange = BigInt(balance.amount);
-            const liSuiRatio = Number(suiBalanceChange) / Number(liSuiAmountBigint);
+            const liSuiRatio =
+              Number(suiBalanceChange) / Number(liSuiAmountBigint);
           }
         });
         loadingSimulateTx = false;

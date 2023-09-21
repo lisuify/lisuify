@@ -37,10 +37,9 @@ export interface WalletState {
 }
 
 export interface Stats {
-	loading: boolean;
   totalSuiStaking: bigint;
   liSuiRatio: number;
-  validatorApy: number;
+  averageApy: number;
 }
 
 export interface SuiSystemStateSummaryData extends SuiSystemStateSummary {}
