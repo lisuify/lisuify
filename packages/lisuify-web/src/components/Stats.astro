@@ -1,10 +1,14 @@
-<script lang="ts">
-  import type { Stats } from "../types";
-  import { round, suiToNumber, suiToString } from "../utils";
-  import Info from "./icons/Info.svelte";
+---
+import type { Stats } from "../types";
+import { round, suiToNumber, suiToString } from "../utils";
+import Info from "./icons/Info.astro";
 
-  export let stats: Stats;
-</script>
+interface Props {
+  stats: Stats;
+}
+
+const { stats } = Astro.props;
+---
 
 <div
   class="w-full max-w-lg stats stats-vertical lg:stats-horizontal bg-base-200 rounded-lg"
