@@ -2,5 +2,10 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "skipLibCheck": true,
+    "plugins": [
+      {
+        "name": "@astrojs/ts-plugin"
+      },
+    ],
   }
 }

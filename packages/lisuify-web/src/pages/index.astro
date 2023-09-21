@@ -1,28 +1,78 @@
 ---
 import MainLayout from "../layouts/main.astro";
-import { pageTitle, pageDescription } from "../consts";
+import {
+  pageTitle,
+  pageDescription,
+  network,
+  lisuifyId,
+  originalLisuifyId,
+  stakePoolId,
+} from "../consts";
 import Card from "../components/Card.svelte";
 import StatsComponent from "../components/Stats.astro";
 import Toast from "../components/Toast.svelte";
 
-import { getCurrentSuiBalance, getLiSUIRatio } from "../client/lisuify";
-import { getValidatorAPY } from "../client/sui";
 import type { Stats } from "../types";
+import { SuiClient, getFullnodeUrl } from "@mysten/sui.js/client";
+import { StakePool } from "@lisuify/sdk";
 
-const totalSuiStaking = await getCurrentSuiBalance();
-const liSuiRatio = await getLiSUIRatio();
-const validatorApy = await getValidatorAPY();
-const averageApy =
-  (validatorApy.apys.reduce((sum, a) => {
-    return sum + a.apy;
-  }, 0) /
-    validatorApy.apys.length) *
-  100;
-const stats: Stats = {
-  liSuiRatio: liSuiRatio,
-  totalSuiStaking: totalSuiStaking,
-  averageApy: averageApy,
+export const prerender = false;
+
+// make Bigint serialize
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
 };
+
+const chacheKey = "stats";
+
+const kvNamespace = Astro.locals.runtime.env.LISUIFY_KV_NAMESPACE;
+const statsKV: string = await kvNamespace.get(chacheKey);
+
+let stats: Stats;
+if (statsKV) {
+  stats = JSON.parse(statsKV);
+} else {
+  const client = new SuiClient({
+    url: getFullnodeUrl(network),
+  });
+
+  const stakePool = await StakePool.load({
+    provider: client,
+    originalLisuifyId: originalLisuifyId,
+    lisuifyId: lisuifyId,
+    id: stakePoolId,
+  });
+
+  const totalSuiStaking = stakePool.currentSuiBalance;
+
+  let liSuiRatio: number;
+  if (stakePool.lastUpdateTokenSupply <= 0) {
+    liSuiRatio = 1; // use 1 to prevent zero division
+  } else {
+    liSuiRatio =
+      Number(stakePool.lastUpdateSuiBalance) /
+      Number(stakePool.lastUpdateTokenSupply);
+  }
+
+  const validatorApy = await client.getValidatorsApy();
+  const averageApy =
+    (validatorApy.apys.reduce((sum, a) => {
+      return sum + a.apy;
+    }, 0) /
+      validatorApy.apys.length) *
+    100;
+
+  stats = {
+    liSuiRatio: liSuiRatio,
+    totalSuiStaking: totalSuiStaking,
+    averageApy: averageApy,
+  };
+
+  // put to kv
+  await kvNamespace.put(chacheKey, JSON.stringify(stats), {
+    expirationTtl: 60, // 60 seconds
+  });
+}
 ---
 
 <MainLayout title={pageTitle} description={pageDescription} isWallet={true}>

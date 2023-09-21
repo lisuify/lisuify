@@ -1,5 +1,7 @@
 /// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
+import type { DirectoryRuntime } from "@astrojs/cloudflare";
+import type { KVNamespace } from "@cloudflare/workers-types";
 
 interface ImportMetaEnv {
   readonly PUBLIC_NETWORK: "mainnet" | "testnet" | "devnet" | "localnet";
@@ -12,4 +14,14 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+type ENV = {
+  LISUIFY_KV_NAMESPACE: KVNamespace;
+};
+
+declare global {
+  declare namespace App {
+    interface Locals extends DirectoryRuntime<ENV> {}
+  }
 }
