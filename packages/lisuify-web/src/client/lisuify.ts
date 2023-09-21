@@ -19,7 +19,7 @@ const initialStakePool = async () => {
 };
 
 try {
-  await initialStakePool();
+  initialStakePool();
 } catch (e) {
   addToastMessage(`Failed to initialize stake pool: ${e}`, "error");
 }

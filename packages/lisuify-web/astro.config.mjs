@@ -17,7 +17,16 @@ export default defineConfig({
     functionPerRoute: true,
   }),
   compressHTML: false,
-  integrations: [mdx(), tailwind(), svelte(), serviceWorker(), robotsTxt()],
+  integrations: [
+    mdx(),
+    tailwind(),
+    svelte(),
+		// ignore service worker for ssr
+    // serviceWorker({
+    //   workbox: {},
+    // }),
+    robotsTxt(),
+  ],
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [[rehypeKatex, { output: "mathml" }]],
