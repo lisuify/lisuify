@@ -1,5 +1,3 @@
-import { type PagesFunction } from "@cloudflare/workers-types";
-
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     status: 204,
@@ -11,8 +9,7 @@ export const onRequestOptions: PagesFunction = async () => {
 };
 
 export const onRequest: PagesFunction = async (context) => {
-  console.log("context", JSON.stringify(context));
   const response = await context.next();
-  response.headers.set("Access-Control-Max-Age", "86400");
+  response.headers.set("Cache-Control", "public, max-age=600");
   return response;
 };
