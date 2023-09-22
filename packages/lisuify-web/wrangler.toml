@@ -1,0 +1,22 @@
+name = "lisuify-stats"
+
+kv_namespaces = [
+  { binding = "LISUIFY_KV_NAMESPACE", id = "80ef41a13f4c4a5fb8477f6dd13aa3c3" }
+]
+
+[site]
+bucket = "./dist"
+
+[env.production]
+PUBLIC_NETWORK="testnet"
+PUBLIC_ORIGINAL_LISUIFY_ID="0x0e1f9ee61611d030b946e8e9d98c413ae3daf966dc0178d115f475b62c6ae260"
+PUBLIC_LISUIFY_ID="0x0e1f9ee61611d030b946e8e9d98c413ae3daf966dc0178d115f475b62c6ae260"
+PUBLIC_STAKE_POOL_ID="0x95ff096822e96683f44256aa13fcc0b83a94a45e912269212839111c0786d2da"
+PUBLIC_SWAP_ON_CETUS_LINK="https://cetus-trade-testnet.netlify.app/swap?from=0x2::sui::SUI&to=0xfba1e14b15a4501d19374962d27b23af9dbdb6ea86fbb78c85f2c78d0957e500::coin::COIN"
+
+[env.staging]
+PUBLIC_NETWORK="testnet"
+PUBLIC_ORIGINAL_LISUIFY_ID="0x0e1f9ee61611d030b946e8e9d98c413ae3daf966dc0178d115f475b62c6ae260"
+PUBLIC_LISUIFY_ID="0x0e1f9ee61611d030b946e8e9d98c413ae3daf966dc0178d115f475b62c6ae260"
+PUBLIC_STAKE_POOL_ID="0x95ff096822e96683f44256aa13fcc0b83a94a45e912269212839111c0786d2da"
+PUBLIC_SWAP_ON_CETUS_LINK="https://cetus-trade-testnet.netlify.app/swap?from=0x2::sui::SUI&to=0xfba1e14b15a4501d19374962d27b23af9dbdb6ea86fbb78c85f2c78d0957e500::coin::COIN"

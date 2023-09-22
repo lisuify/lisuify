@@ -26,7 +26,8 @@ export const prerender = false;
 const chacheKey = "stats";
 
 const kvNamespace = Astro.locals.runtime.env.LISUIFY_KV_NAMESPACE;
-const statsKV: string = await kvNamespace.get(chacheKey);
+const statsKV: string | null = await kvNamespace.get(chacheKey);
+console.log("statsKV", statsKV);
 
 let stats: Stats;
 if (statsKV) {
