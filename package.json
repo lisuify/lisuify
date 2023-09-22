@@ -12,7 +12,7 @@
   },
   "scripts": {
     "web": "npm --workspace=lisuify-web run dev",
-    "web:build": "npm --workspace=lisuify-web run build"
+    "web:build": "npm --workspace=lisuify-web run build && cp -r packages/lisuify-web/functions ."
   },
   "license": "BSD-2-Clause"
 }
