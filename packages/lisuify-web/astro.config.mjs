@@ -16,7 +16,7 @@ export default defineConfig({
     mode: "directory",
     functionPerRoute: true,
   }),
-  compressHTML: false,
+  compressHTML: true,
   integrations: [
     mdx(),
     tailwind(),
